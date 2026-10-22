@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KotoVibe | Japanese Flashcards & Mini-Quiz</title>
+  <!-- Tailwind CSS for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts for switching vibes -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Press+Start+2P&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <!-- Phosphor Icons for clean UI icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <style>
+    /* Base typography */
+    body {
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      transition: background-color 0.35s ease, color 0.35s ease;
+    }
+
+    /* 3D Card Flip CSS Rules */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+
+    /* Theme 1: Tokyo Neon (Default Dark Cyberpunk Vibe) */
+    body.theme-neon {
+      background-color: #090d16;
+      background-image: 
+        radial-gradient(at 15% 15%, rgba(236, 72, 153, 0.15) 0px, transparent 50%),
+        radial-gradient(at 85% 85%, rgba(6, 182, 212, 0.15) 0px, transparent 50%);
+      color: #f8fafc;
+    }
+    .theme-neon .app-card {
+      background: rgba(30, 41, 59, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(236, 72, 153, 0.35);
+      box-shadow: 0 10px 30px -10px rgba(236, 72, 153, 0.25), 0 0 15px rgba(6, 182, 212, 0.1);
+    }
+    .theme-neon .accent-btn {
+      background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
+    }
+    .theme-neon .accent-btn:hover {
+      filter: brightness(1.1);
+    }
+    .theme-neon .secondary-btn {
+      background: rgba(51, 65, 85, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: #e2e8f0;
+    }
+    .theme-neon .badge-pill {
+      background: rgba(6, 182, 212, 0.15);
+      color: #22d3ee;
+      border: 1px solid rgba(6, 182, 212, 0.4);
+    }
+
+    /* Theme 2: Matcha Minimalist (Warm, Calm Light Vibe) */
+    body.theme-matcha {
+      background-color: #f4f6f0;
+      background-image: radial-gradient(at 50% 0%, rgba(101, 163, 13, 0.08) 0px, transparent 60%);
+      color: #1e293b;
+    }
+    .theme-matcha .app-card {
+      background: #ffffff;
+      border: 1px solid #d9e2ec;
+      box-shadow: 0 12px 24px -6px rgba(63, 98, 18, 0.08);
+    }
+    .theme-matcha .accent-btn {
+      background: #4d7c0f;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(77, 124, 15, 0.25);
+    }
+    .theme-matcha .accent-btn:hover {
+      background: #3f6212;
+    }
+    .theme-matcha .secondary-btn {
+      background: #e2e8f0;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .theme-matcha .badge-pill {
+      background: #ecfccb;
+      color: #3f6212;
+      border: 1px solid #bef264;
+    }
+
+    /* Theme 3: Retro Arcade (8-Bit Pixel Vibe) */
+    body.theme-arcade {
+      background-color: #1e1b4b;
+      background-image: linear-gradient(rgba(17, 24, 39, 0.85) 2px, transparent 2px),
+                        linear-gradient(90deg, rgba(17, 24, 39, 0.85) 2px, transparent 2px);
+      background-size: 28px 28px;
+      color: #fef08a;
+    }
+    .theme-arcade .arcade-font {
+      font-family: 'Press Start 2P', monospace;
+      letter-spacing: 0.05em;
+    }
+    .theme-arcade .app-card {
+      background: #0f172a;
+      border: 3px solid #facc15;
+      box-shadow: 6px 6px 0px #ef4444;
+    }
+    .theme-arcade .accent-btn {
+      background: #ef4444;
+      color: #ffffff;
+      border: 2px solid #fef08a;
+      box-shadow: 4px 4px 0px #000000;
+    }
+    .theme-arcade .accent-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px #000000;
+    }
+    .theme-arcade .secondary-btn {
+      background: #312e81;
+      color: #fef08a;
+      border: 2px solid #818cf8;
+      box-shadow: 3px 3px 0px #000000;
+    }
+    .theme-arcade .badge-pill {
+      background: #422006;
+      color: #facc15;
+      border: 2px solid #facc15;
+    }
+
+    /* Floating Confetti Canvas */
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body class="theme-neon min-h-screen flex flex-col justify-between selection:bg-pink-500 selection:text-white">
+
+  <!-- Confetti Overlay Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Top Navigation & Vibe Switcher -->
+  <header class="w-full max-w-4xl mx-auto px-4 pt-6 pb-4">
+    <div class="app-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 transition-all">
+      
+      <!-- Brand Title with Official Ko Mascot Logo -->
+      <div class="flex items-center gap-3.5">
+        <!-- Ko Mascot Logo SVG -->
+        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden shadow-lg shrink-0 transform hover:scale-105 transition-transform duration-200">
+          <svg viewBox="0 0 200 200" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <!-- Warm Pastel Yellow Background Gradient -->
+              <linearGradient id="koBgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ffea99"/>
+                <stop offset="50%" stop-color="#ffd56b"/>
+                <stop offset="100%" stop-color="#ffbf52"/>
+              </linearGradient>
+
+              <!-- Mascot 3D Orange-to-Magenta Gradient -->
+              <linearGradient id="koMascotGradient" x1="20%" y1="10%" x2="80%" y2="90%">
+                <stop offset="0%" stop-color="#ffc738"/>
+                <stop offset="35%" stop-color="#ff7f36"/>
+                <stop offset="70%" stop-color="#f43f5e"/>
+                <stop offset="100%" stop-color="#ec4899"/>
+              </linearGradient>
+
+              <!-- Soft 3D Drop Shadow -->
+              <filter id="koSoftShadow" x="-15%" y="-15%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#b45309" flood-opacity="0.25"/>
+              </filter>
+            </defs>
+
+            <!-- Rounded Squircle Container -->
+            <rect width="200" height="200" rx="46" fill="url(#koBgGradient)"/>
+
+            <!-- Soft Top-Light Reflection on Container -->
+            <path d="M 12 50 Q 100 15 188 50 Q 100 25 12 50 Z" fill="#ffffff" opacity="0.18"/>
+
+            <!-- Mascots Group with Shadow -->
+            <g filter="url(#koSoftShadow)">
+              <!-- Bubbly Letter 'K' -->
+              <!-- Left Vertical Stem -->
+              <path d="M 46 56 
+                       C 38 56, 36 70, 36 82 
+                       L 38 122 
+                       C 39 138, 45 146, 56 146 
+                       C 67 146, 73 136, 70 120 
+                       L 67 80 
+                       C 66 65, 58 56, 46 56 Z" 
+                    fill="url(#koMascotGradient)"/>
+
+              <!-- Diagonal Upper Arm of K -->
+              <path d="M 60 98 
+                       C 68 85, 78 70, 89 59 
+                       C 98 49, 110 57, 104 69 
+                       C 94 84, 80 100, 72 107 Z" 
+                    fill="url(#koMascotGradient)"/>
+
+              <!-- Diagonal Lower Leg of K -->
+              <path d="M 64 103 
+                       C 73 112, 85 128, 93 138 
+                       C 102 148, 113 143, 109 131 
+                       C 100 118, 86 102, 74 95 Z" 
+                    fill="url(#koMascotGradient)"/>
+
+              <!-- Glossy Highlights on 'K' -->
+              <ellipse cx="49" cy="68" rx="5" ry="11" transform="rotate(-12 49 68)" fill="#ffffff" opacity="0.65"/>
+              <circle cx="45" cy="85" r="3.2" fill="#ffffff" opacity="0.5"/>
+
+              <!-- Smiling 'o' Mascot Companion (Teardrop / Drop Creature) -->
+              <path d="M 126 68 
+                       C 148 68, 168 85, 166 110 
+                       C 164 134, 142 148, 122 148 
+                       C 114 148, 108 144, 112 136 
+                       C 118 125, 122 110, 106 102 
+                       C 98 98, 102 85, 114 74 
+                       C 118 70, 122 68, 126 68 Z" 
+                    fill="url(#koMascotGradient)"/>
+
+              <!-- Subtle Head Highlight on Mascot -->
+              <ellipse cx="132" cy="76" rx="14" ry="7" transform="rotate(8 132 76)" fill="#ffffff" opacity="0.22"/>
+
+              <!-- Cute Smiling Eyes -->
+              <!-- Left Eye -->
+              <path d="M 120 89 Q 124 84 129 89" stroke="#1e1b4b" stroke-width="4.2" stroke-linecap="round" fill="none"/>
+              <!-- Right Eye -->
+              <path d="M 143 93 Q 147 88 152 93" stroke="#1e1b4b" stroke-width="4.2" stroke-linecap="round" fill="none"/>
+
+              <!-- Cheerful Open Mouth with Tongue -->
+              <path d="M 125 99 Q 134 112 143 101 Q 134 97 125 99 Z" fill="#1e1b4b"/>
+              <path d="M 128 103 Q 134 110 140 104 Q 134 101 128 103 Z" fill="#f43f5e"/>
+            </g>
+          </svg>
+        </div>
+
+        <div>
+          <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight arcade-font">KotoVibe</h1>
+          <p class="text-xs sm:text-sm opacity-75">Professional Japanese Language Trainer</p>
+        </div>
+      </div>
+
+      <!-- Theme Vibe Switcher -->
+      <div class="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+        <span class="text-xs font-semibold uppercase tracking-wider opacity-70 flex items-center gap-1">
+          <i class="ph-fill ph-sparkle"></i> Vibe Switcher:
+        </span>
+        <div class="grid grid-cols-3 gap-1.5 w-full sm:w-auto p-1 rounded-xl bg-black/20 border border-white/10">
+          <button onclick="setTheme('neon')" id="theme-btn-neon" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 bg-pink-500 text-white shadow">
+            <i class="ph-fill ph-lightning"></i> Neon
+          </button>
+          <button onclick="setTheme('matcha')" id="theme-btn-matcha" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 opacity-75 hover:opacity-100">
+            <i class="ph-fill ph-leaf"></i> Matcha
+          </button>
+          <button onclick="setTheme('arcade')" id="theme-btn-arcade" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 opacity-75 hover:opacity-100">
+            <i class="ph-fill ph-game-controller"></i> Arcade
+          </button>
+        </div>
+
+        <!-- Direct Ko-fi Support Link Button -->
+        <a href="https://ko-fi.com/Kotovibe" target="_blank" rel="noopener noreferrer" title="Support Kotovibe on Ko-fi" class="w-full sm:w-auto ml-0 sm:ml-1 px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 bg-[#13C3FF] hover:bg-[#009ee5] text-white shadow-md hover:shadow-[#13C3FF]/30 hover:scale-105 active:scale-95 transition-all duration-200 border border-[#38bdf8]/50 cursor-pointer no-underline">
+          <!-- Coffee Cup SVG Icon -->
+          <svg class="w-4 h-4 fill-white shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM2 19h18v2H2z"/>
+          </svg>
+          <span>Support on Ko-fi</span>
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Interactive Content Area -->
+  <main class="w-full max-w-4xl mx-auto px-4 py-4 flex-grow flex flex-col gap-6">
+
+    <!-- Mode Tabs + Stats Bar -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <!-- Mode Navigation Buttons -->
+      <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+        <button onclick="switchMode('flashcards')" id="tab-flashcards" class="accent-btn flex-1 sm:flex-initial px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all whitespace-nowrap">
+          <i class="ph-bold ph-cards text-lg"></i> Flashcards
+        </button>
+        <button onclick="switchMode('quiz')" id="tab-quiz" class="secondary-btn flex-1 sm:flex-initial px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all whitespace-nowrap">
+          <i class="ph-bold ph-trophy text-lg"></i> Mini-Quiz
+        </button>
+        <button onclick="switchMode('browse')" id="tab-browse" class="secondary-btn flex-1 sm:flex-initial px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all whitespace-nowrap">
+          <i class="ph-bold ph-books text-lg"></i> Browse Deck
+        </button>
+        <button onclick="switchMode('add')" id="tab-add" class="secondary-btn flex-1 sm:flex-initial px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all whitespace-nowrap">
+          <i class="ph-bold ph-plus-circle text-lg"></i> Add Word
+        </button>
+      </div>
+
+      <!-- Streak & Score Counter -->
+      <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+        <div class="badge-pill px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5">
+          <i class="ph-fill ph-fire text-orange-400"></i> Streak: <span id="streak-count">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 1: FLASHCARD MODE -->
+    <section id="section-flashcards" class="flex flex-col items-center gap-5">
+      
+      <!-- Category Filter Bar -->
+      <div class="w-full max-w-xl flex items-center justify-between gap-2 overflow-x-auto py-1">
+        <div class="flex items-center gap-1.5" id="category-filters">
+          <button onclick="filterCategory('All')" id="cat-btn-All" class="badge-pill px-3 py-1 rounded-lg text-xs font-bold transition-all bg-cyan-500/30">All</button>
+          <button onclick="filterCategory('Verbs')" id="cat-btn-Verbs" class="badge-pill px-3 py-1 rounded-lg text-xs font-semibold transition-all opacity-75">Verbs</button>
+          <button onclick="filterCategory('Nouns')" id="cat-btn-Nouns" class="badge-pill px-3 py-1 rounded-lg text-xs font-semibold transition-all opacity-75">Nouns</button>
+          <button onclick="filterCategory('Adjectives')" id="cat-btn-Adjectives" class="badge-pill px-3 py-1 rounded-lg text-xs font-semibold transition-all opacity-75">Adjectives</button>
+          <button onclick="filterCategory('Expressions')" id="cat-btn-Expressions" class="badge-pill px-3 py-1 rounded-lg text-xs font-semibold transition-all opacity-75">Expressions</button>
+        </div>
+        <span id="card-progress-label" class="text-xs font-bold opacity-90 whitespace-nowrap">1 / 265</span>
+      </div>
+
+      <!-- Hint & Audio Controls -->
+      <div class="w-full max-w-xl flex items-center justify-between text-xs font-medium opacity-90 px-1">
+        <button onclick="toggleFrontHiragana()" id="toggle-hiragana-btn" class="badge-pill px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all hover:scale-105">
+          <i class="ph-fill ph-eye"></i> <span id="hiragana-toggle-text">Show Hiragana Hint</span>
+        </button>
+        <span class="hidden sm:flex items-center gap-1 opacity-75 text-xs">
+          <kbd class="px-1.5 py-0.5 rounded bg-black/20 border border-current">Space</kbd> flip | <kbd class="px-1.5 py-0.5 rounded bg-black/20 border border-current">←/→</kbd> nav
+        </span>
+      </div>
+
+      <!-- 3D Flip Card Container -->
+      <div class="w-full max-w-xl h-80 sm:h-96 perspective-1000 cursor-pointer select-none" onclick="flipCard()">
+        <div id="flashcard-inner" class="w-full h-full relative transform-style-3d">
+          
+          <!-- Card Front -->
+          <div class="app-card absolute inset-0 w-full h-full rounded-3xl p-8 flex flex-col items-center justify-between backface-hidden">
+            <div class="w-full flex items-center justify-between">
+              <span id="card-category" class="badge-pill text-xs font-bold px-3 py-1 rounded-full">Core • Verb</span>
+              <button onclick="speakJapanese(event)" title="Listen to pronunciation" class="secondary-btn w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 transition-transform">
+                <i class="ph-fill ph-speaker-high text-lg"></i>
+              </button>
+            </div>
+
+            <div class="text-center my-auto">
+              <div id="card-emoji" class="text-4xl sm:text-5xl mb-2">📖</div>
+              <p id="card-front-hiragana" class="text-base sm:text-lg font-bold tracking-widest opacity-80 mb-1 invisible">みる</p>
+              <h2 id="card-jp" class="text-5xl sm:text-6xl font-black tracking-wide">見る</h2>
+            </div>
+
+            <div class="w-full flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-widest opacity-60">
+              <span>Tap to reveal meaning</span>
+              <i class="ph-bold ph-arrows-clockwise"></i>
+            </div>
+          </div>
+
+          <!-- Card Back -->
+          <div class="app-card absolute inset-0 w-full h-full rounded-3xl p-8 flex flex-col items-center justify-between backface-hidden rotate-y-180">
+            <div class="w-full flex items-center justify-between">
+              <span class="badge-pill text-xs font-bold px-3 py-1 rounded-full">ひらがな & Meaning</span>
+              <button onclick="speakJapanese(event)" title="Listen to pronunciation" class="secondary-btn w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 transition-transform">
+                <i class="ph-fill ph-speaker-high text-lg"></i>
+              </button>
+            </div>
+
+            <div class="text-center space-y-1.5 my-auto w-full">
+              <p id="card-hiragana" class="text-xl sm:text-2xl font-extrabold tracking-widest opacity-90">みる</p>
+              <h3 id="card-en" class="text-3xl sm:text-4xl font-extrabold">To see / To watch</h3>
+              
+              <div class="mt-3 pt-3 border-t border-current/15 max-w-md mx-auto space-y-1">
+                <p class="text-[11px] uppercase tracking-wider opacity-60">Example Sentence</p>
+                <p id="card-example-jp" class="text-base sm:text-lg font-bold">テレビを見ます。</p>
+                <p id="card-example-hiragana" class="text-xs sm:text-sm font-medium opacity-85">てれびをみます。</p>
+                <p id="card-example-en" class="text-xs sm:text-sm opacity-75 italic">"I watch television."</p>
+              </div>
+            </div>
+
+            <div class="w-full flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-widest opacity-60">
+              <span>Tap to flip back</span>
+              <i class="ph-bold ph-arrow-u-up-left"></i>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Navigation Controls -->
+      <div class="flex items-center justify-center gap-3 w-full max-w-xl">
+        <button onclick="prevCard()" class="secondary-btn px-5 py-3 rounded-xl font-bold text-sm flex items-center gap-2 hover:scale-105 transition-transform">
+          <i class="ph-bold ph-caret-left"></i> Prev
+        </button>
+        <button onclick="flipCard()" class="accent-btn flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-transform">
+          <i class="ph-bold ph-arrows-left-right"></i> Flip Card
+        </button>
+        <button onclick="shuffleDeck()" title="Shuffle Deck" class="secondary-btn px-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center hover:scale-105 transition-transform">
+          <i class="ph-bold ph-shuffle text-lg"></i>
+        </button>
+        <button onclick="nextCard()" class="secondary-btn px-5 py-3 rounded-xl font-bold text-sm flex items-center gap-2 hover:scale-105 transition-transform">
+          Next <i class="ph-bold ph-caret-right"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- SECTION 2: MINI-QUIZ MODE -->
+    <section id="section-quiz" class="hidden flex-col items-center gap-5">
+      <div class="app-card w-full max-w-xl rounded-3xl p-6 sm:p-8 flex flex-col gap-6">
+        
+        <!-- Quiz Header & Direction Toggle -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-current/10 pb-4 gap-3">
+          <div>
+            <span class="text-xs uppercase tracking-wider opacity-70 font-bold">Core Vocabulary Challenge</span>
+            <h2 id="quiz-instruction" class="text-xl font-extrabold">Choose the matching Japanese word</h2>
+          </div>
+          <div class="flex items-center justify-between sm:justify-end gap-3">
+            <button onclick="toggleQuizDirection()" id="quiz-dir-btn" class="badge-pill px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 hover:scale-105 transition-transform">
+              <i class="ph-bold ph-arrows-left-right"></i> <span id="quiz-dir-label">Mode: EN → JP</span>
+            </button>
+            <div class="text-right">
+              <span class="text-xs opacity-70 block">Score / Best</span>
+              <span id="best-streak-display" class="text-base font-black">✅ 0 • 🔥 0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Target Question Word -->
+        <div class="py-6 px-4 text-center rounded-2xl bg-black/10 border border-current/10 relative">
+          <button onclick="speakQuizWord(event)" title="Listen to Japanese audio" class="secondary-btn w-9 h-9 rounded-full flex items-center justify-center absolute top-3 right-3 hover:scale-105 transition-transform">
+            <i class="ph-fill ph-speaker-high text-base"></i>
+          </button>
+          <div id="quiz-emoji" class="text-4xl mb-2">📖</div>
+          <div id="quiz-jp" class="text-3xl sm:text-4xl font-black mb-1">To see / To watch</div>
+          <div id="quiz-hiragana" class="text-sm sm:text-base font-bold tracking-widest opacity-85">Select the correct Japanese term below</div>
+        </div>
+
+        <!-- 4 Multiple Choice Buttons -->
+        <div id="quiz-options" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Dynamically populated by JS -->
+        </div>
+
+        <!-- Feedback Banner -->
+        <div id="quiz-feedback" class="hidden rounded-2xl p-4 text-sm font-bold flex items-center justify-between">
+          <span id="quiz-feedback-text"></span>
+          <button onclick="generateQuizQuestion()" class="accent-btn px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1 shrink-0 ml-2">
+            Next Question <i class="ph-bold ph-arrow-right"></i>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 3: BROWSE DECK MODE -->
+    <section id="section-browse" class="hidden flex-col items-center gap-5 w-full">
+      <div class="app-card w-full max-w-3xl rounded-3xl p-6 sm:p-8 flex flex-col gap-5">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-extrabold">Browse All Words</h2>
+          </div>
+          <div class="w-full sm:w-64">
+            <input type="text" id="search-input" oninput="handleSearch()" placeholder="Search Japanese, Hiragana, or English..." class="w-full px-4 py-2 rounded-xl bg-black/20 border border-current/25 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500" />
+          </div>
+        </div>
+
+        <!-- Vocabulary List Table/Grid -->
+        <div class="max-h-96 overflow-y-auto pr-1 space-y-2" id="browse-list-container">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: ADD CUSTOM CARD MODE -->
+    <section id="section-add" class="hidden flex-col items-center gap-5">
+      <div class="app-card w-full max-w-xl rounded-3xl p-6 sm:p-8 flex flex-col gap-5">
+        <div>
+          <span class="badge-pill text-xs font-bold px-3 py-1 rounded-full">Custom Deck Builder</span>
+          <h2 class="text-2xl font-extrabold mt-2">Add Your Own Flashcard</h2>
+          <p class="text-xs sm:text-sm opacity-75 mt-1">
+            Type any new Japanese word below to instantly update your flashcard deck and mini-quiz.
+          </p>
+        </div>
+
+        <form id="add-card-form" onsubmit="handleAddCard(event)" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Japanese (Kanji / Vocabulary) *</label>
+              <input type="text" id="input-jp" required placeholder="e.g., 桜" class="w-full px-4 py-2.5 rounded-xl bg-black/20 border border-current/25 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm font-medium" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Hiragana (ひらがな) *</label>
+              <input type="text" id="input-hiragana" required placeholder="e.g., さくら" class="w-full px-4 py-2.5 rounded-xl bg-black/20 border border-current/25 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm font-medium" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold uppercase tracking-wider opacity-80 mb-1">English Meaning *</label>
+              <input type="text" id="input-en" required placeholder="e.g., Cherry Blossom" class="w-full px-4 py-2.5 rounded-xl bg-black/20 border border-current/25 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm font-medium" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Icon Emoji</label>
+              <input type="text" id="input-emoji" placeholder="🌸" maxlength="4" class="w-full px-4 py-2.5 rounded-xl bg-black/20 border border-current/25 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm font-medium text-center" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Example Sentence (Kanji/JP)</label>
+              <input type="text" id="input-example" placeholder="e.g., 桜がとてもきれいです。" class="w-full px-4 py-2.5 rounded-xl bg-black/20 border border-current/25 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm font-medium" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Example Hiragana (ひらがな)</label>
+              <input type="text" id="input-example-hiragana" placeholder="e.g., さくらがとてもきれいです。" class="w-full px-4 py-2.5 rounded-xl bg-black/20 border border-current/25 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm font-medium" />
+            </div>
+          </div>
+
+          <div class="pt-2 flex items-center justify-between gap-3">
+            <button type="button" onclick="resetDefaultDeck()" class="secondary-btn px-4 py-2.5 rounded-xl text-xs font-bold opacity-80 hover:opacity-100">
+              Reset Core Deck
+            </button>
+            <button type="submit" class="accent-btn px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2">
+              <i class="ph-bold ph-plus"></i> Add to Deck
+            </button>
+          </div>
+        </form>
+
+        <!-- Toast Message Box -->
+        <div id="form-toast" class="hidden p-3.5 rounded-xl bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-xs font-bold flex items-center justify-between">
+          <span id="form-toast-text">✨ New card added to your deck!</span>
+          <button onclick="switchMode('flashcards')" class="underline ml-2">View Card →</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Clean Professional Footer -->
+  <footer class="w-full max-w-4xl mx-auto px-4 py-6">
+    <div class="app-card rounded-2xl p-4 text-xs flex flex-col sm:flex-row items-center justify-between gap-3 opacity-75">
+      <span>© 2026 KotoVibe. All rights reserved.</span>
+      <div class="flex items-center gap-4">
+        <a href="#" onclick="switchMode('flashcards'); return false;" class="hover:underline">Flashcards</a>
+        <a href="#" onclick="switchMode('quiz'); return false;" class="hover:underline">Quiz Mode</a>
+        <a href="#" onclick="switchMode('browse'); return false;" class="hover:underline">Browse Deck</a>
+        <a href="https://ko-fi.com/Kotovibe" target="_blank" rel="noopener noreferrer" class="hover:underline text-[#13C3FF] font-bold flex items-center gap-1">Support on Ko-fi ☕</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Buy Me a Coffee / Support Modal Dialog -->
+  <div id="support-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="app-card w-full max-w-md rounded-3xl p-6 sm:p-7 relative border border-white/20 shadow-2xl transform scale-95 transition-transform duration-200" id="support-modal-box">
+      <!-- Close Button -->
+      <button onclick="closeSupportModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center transition-colors">
+        <i class="ph-bold ph-x text-base"></i>
+      </button>
+
+      <!-- Modal Header -->
+      <div class="text-center space-y-2 mb-6">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-[#13C3FF] flex items-center justify-center shadow-lg text-white mb-3 shadow-[#13C3FF]/30">
+          <svg class="w-7 h-7 fill-white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 5h-2V5h2v3zM2 19h18v2H2z"/>
+          </svg>
+        </div>
+        <h3 class="text-xl sm:text-2xl font-extrabold tracking-tight">Support KotoVibe</h3>
+        <p class="text-xs sm:text-sm opacity-80 max-w-xs mx-auto leading-relaxed">
+          KotoVibe is an independent Japanese study tool built for learners worldwide. Your tips directly fund ongoing updates and server hosting on Ko-fi!
+        </p>
+      </div>
+
+      <!-- Support Tier Options (Direct Ko-fi Links with preset amounts) -->
+      <div class="space-y-2.5 mb-6">
+        <a href="https://ko-fi.com/Kotovibe?tip=3" target="_blank" rel="noopener noreferrer" class="group flex items-center justify-between p-3.5 rounded-2xl bg-black/20 hover:bg-black/35 border border-current/15 hover:border-[#13C3FF] transition-all cursor-pointer">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl group-hover:scale-110 transition-transform">☕</span>
+            <div class="text-left">
+              <div class="font-bold text-sm">Coffee Tier</div>
+              <div class="text-[11px] opacity-70">A cup of fuel for feature updates</div>
+            </div>
+          </div>
+          <span class="badge-pill px-3 py-1 rounded-xl text-xs font-extrabold text-[#13C3FF] border-[#13C3FF]/40">$3</span>
+        </a>
+
+        <a href="https://ko-fi.com/Kotovibe?tip=5" target="_blank" rel="noopener noreferrer" class="group flex items-center justify-between p-3.5 rounded-2xl bg-black/20 hover:bg-black/35 border border-current/15 hover:border-emerald-400 transition-all cursor-pointer">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl group-hover:scale-110 transition-transform">🍵</span>
+            <div class="text-left">
+              <div class="font-bold text-sm">Matcha Tier</div>
+              <div class="text-[11px] opacity-70">Supports deck expansion & audio curation</div>
+            </div>
+          </div>
+          <span class="badge-pill px-3 py-1 rounded-xl text-xs font-extrabold text-emerald-300 border-emerald-400/40">$5</span>
+        </a>
+
+        <a href="https://ko-fi.com/Kotovibe?tip=10" target="_blank" rel="noopener noreferrer" class="group flex items-center justify-between p-3.5 rounded-2xl bg-black/20 hover:bg-black/35 border border-current/15 hover:border-rose-400 transition-all cursor-pointer">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl group-hover:scale-110 transition-transform">🍜</span>
+            <div class="text-left">
+              <div class="font-bold text-sm">Ramen Tier</div>
+              <div class="text-[11px] opacity-70">Supercharge new JLPT decks & quiz modes</div>
+            </div>
+          </div>
+          <span class="badge-pill px-3 py-1 rounded-xl text-xs font-extrabold text-rose-300 border-rose-400/40">$10</span>
+        </a>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row items-center gap-2">
+        <a href="https://ko-fi.com/Kotovibe" target="_blank" rel="noopener noreferrer" class="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-center bg-[#13C3FF] hover:bg-[#009ee5] text-white shadow-lg shadow-[#13C3FF]/30 transition-all">
+          Open ko-fi.com/Kotovibe →
+        </a>
+        <button onclick="closeSupportModal()" class="w-full sm:w-auto px-4 py-3 rounded-xl secondary-btn font-bold text-xs opacity-75 hover:opacity-100 transition-opacity">
+          Maybe Later
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic -->
+  <script>
+    // 100% Authentic Core JLPT N5 Japanese Vocabulary Database (Zero placeholders)
+    const CORE_2000_DATABASE = [
+      // ================= VERBS (70 Essential JLPT N5 Verbs) =================
+      { jp: "見る", hiragana: "みる", en: "To see / To watch", emoji: "👀", category: "Verbs", exampleJp: "毎晩テレビを見ます。", exampleHiragana: "まいばんてれびをみます。", exampleEn: "I watch television every night." },
+      { jp: "食べる", hiragana: "たべる", en: "To eat", emoji: "🍱", category: "Verbs", exampleJp: "朝ご飯を食べましたか。", exampleHiragana: "あさごはんをたべましたか。", exampleEn: "Did you eat breakfast?" },
+      { jp: "飲む", hiragana: "のむ", en: "To drink", emoji: "🍵", category: "Verbs", exampleJp: "毎朝コーヒーを飲みます。", exampleHiragana: "まいあさこーひーをのみます。", exampleEn: "I drink coffee every morning." },
+      { jp: "行く", hiragana: "いく", en: "To go", emoji: "✈️", category: "Verbs", exampleJp: "来月、京都に行きます。", exampleHiragana: "らいげつ、きょうとにいきます。", exampleEn: "I will go to Kyoto next month." },
+      { jp: "来る", hiragana: "くる", en: "To come", emoji: "🚶", category: "Verbs", exampleJp: "友達が家に来ました。", exampleHiragana: "ともだちがいえにきました。", exampleEn: "My friend came to my house." },
+      { jp: "帰る", hiragana: "かえる", en: "To return / To go home", emoji: "🏠", category: "Verbs", exampleJp: "今日は早く帰ります。", exampleHiragana: "きょうははやくかえります。", exampleEn: "I am going home early today." },
+      { jp: "話す", hiragana: "はなす", en: "To speak / To talk", emoji: "💬", category: "Verbs", exampleJp: "日本語で話しましょう。", exampleHiragana: "にほんごではなしましょう。", exampleEn: "Let's speak in Japanese." },
+      { jp: "聞く", hiragana: "きく", en: "To listen / To ask", emoji: "🎧", category: "Verbs", exampleJp: "よく音楽を聞きます。", exampleHiragana: "よくおんがくをききます。", exampleEn: "I often listen to music." },
+      { jp: "読む", hiragana: "よむ", en: "To read", emoji: "📖", category: "Verbs", exampleJp: "電車で本を読みます。", exampleHiragana: "でんしゃでほんをよみます。", exampleEn: "I read a book on the train." },
+      { jp: "書く", hiragana: "かく", en: "To write", emoji: "✍️", category: "Verbs", exampleJp: "ノートに漢字を書きます。", exampleHiragana: "のーとにかんじをかきます。", exampleEn: "I write kanji in my notebook." },
+      { jp: "買う", hiragana: "かう", en: "To buy", emoji: "🛍️", category: "Verbs", exampleJp: "新しい靴を買いました。", exampleHiragana: "あたらしいくつをかいました。", exampleEn: "I bought new shoes." },
+      { jp: "売る", hiragana: "うる", en: "To sell", emoji: "🏪", category: "Verbs", exampleJp: "この店はパンを売っています。", exampleHiragana: "このみせはぱんをうっています。", exampleEn: "This shop sells bread." },
+      { jp: "作る", hiragana: "つくる", en: "To make / To cook", emoji: "🍳", category: "Verbs", exampleJp: "晩ご飯を作ります。", exampleHiragana: "ばんごはんをつくります。", exampleEn: "I make dinner." },
+      { jp: "使う", hiragana: "つかう", en: "To use", emoji: "💻", category: "Verbs", exampleJp: "毎日パソコンを使います。", exampleHiragana: "まいにちぱそこんをつかいます。", exampleEn: "I use a computer every day." },
+      { jp: "待つ", hiragana: "まつ", en: "To wait", emoji: "⏳", category: "Verbs", exampleJp: "駅で友達を待ちます。", exampleHiragana: "えきでともだちをまちます。", exampleEn: "I wait for my friend at the station." },
+      { jp: "持つ", hiragana: "もつ", en: "To hold / To have", emoji: "👜", category: "Verbs", exampleJp: "荷物を持ちましょうか。", exampleHiragana: "にもつをもちましょうか。", exampleEn: "Shall I carry your luggage?" },
+      { jp: "知る", hiragana: "しる", en: "To know", emoji: "💡", category: "Verbs", exampleJp: "そのニュースを知っていますか。", exampleHiragana: "そのにゅーすをしっていますか。", exampleEn: "Do you know that news?" },
+      { jp: "わかる", hiragana: "わかる", en: "To understand", emoji: "👌", category: "Verbs", exampleJp: "日本語が少しわかります。", exampleHiragana: "にほんごがすこしわかります。", exampleEn: "I understand a little Japanese." },
+      { jp: "寝る", hiragana: "ねる", en: "To sleep / To go to bed", emoji: "😴", category: "Verbs", exampleJp: "昨日は十時に寝ました。", exampleHiragana: "きのうはじゅうじにねました。", exampleEn: "I went to bed at ten o'clock yesterday." },
+      { jp: "起きる", hiragana: "おきる", en: "To wake up / To get up", emoji: "⏰", category: "Verbs", exampleJp: "毎朝六時に起きます。", exampleHiragana: "まいあさろくじにおきます。", exampleEn: "I wake up at six every morning." },
+      { jp: "働く", hiragana: "はたらく", en: "To work", emoji: "💼", category: "Verbs", exampleJp: "東京の会社で働いています。", exampleHiragana: "とうきょうのかいしゃではたらいています。", exampleEn: "I work at a company in Tokyo." },
+      { jp: "休む", hiragana: "やすむ", en: "To rest / To take a break", emoji: "🛋️", category: "Verbs", exampleJp: "日曜日はゆっくり休みます。", exampleHiragana: "にちようびはゆっくりやすみます。", exampleEn: "I rest leisurely on Sundays." },
+      { jp: "遊ぶ", hiragana: "あそぶ", en: "To play / To hang out", emoji: "🎮", category: "Verbs", exampleJp: "公園で子供が遊んでいます。", exampleHiragana: "こうえんでこどもがあそんでいます。", exampleEn: "Children are playing in the park." },
+      { jp: "泳ぐ", hiragana: "およぐ", en: "To swim", emoji: "🏊", category: "Verbs", exampleJp: "夏は海で泳ぎます。", exampleHiragana: "なつはうみでおよぎます。", exampleEn: "I swim in the sea in summer." },
+      { jp: "走る", hiragana: "はしる", en: "To run", emoji: "🏃", category: "Verbs", exampleJp: "毎朝公園を走ります。", exampleHiragana: "まいあさこうえんをはしります。", exampleEn: "I run in the park every morning." },
+      { jp: "歩く", hiragana: "あるく", en: "To walk", emoji: "🚶‍♂️", category: "Verbs", exampleJp: "駅まで歩いて行きます。", exampleHiragana: "えきまであるいていきます。", exampleEn: "I walk to the station." },
+      { jp: "乗る", hiragana: "のる", en: "To ride / To board", emoji: "🚆", category: "Verbs", exampleJp: "電車に乗ります。", exampleHiragana: "でんしゃにのります。", exampleEn: "I take the train." },
+      { jp: "降りる", hiragana: "おりる", en: "To get off / To descend", emoji: "🚉", category: "Verbs", exampleJp: "次の駅で降ります。", exampleHiragana: "つぎのえきでおります。", exampleEn: "I get off at the next station." },
+      { jp: "開ける", hiragana: "あける", en: "To open", emoji: "🚪", category: "Verbs", exampleJp: "窓を開けてください。", exampleHiragana: "まどをあけてください。", exampleEn: "Please open the window." },
+      { jp: "閉める", hiragana: "しめる", en: "To close", emoji: "🔒", category: "Verbs", exampleJp: "ドアを閉めました。", exampleHiragana: "どあをしめました。", exampleEn: "I closed the door." },
+      { jp: "教える", hiragana: "おしえる", en: "To teach / To tell", emoji: "👨‍🏫", category: "Verbs", exampleJp: "英語を教えています。", exampleHiragana: "えいごをおしえています。", exampleEn: "I teach English." },
+      { jp: "習う", hiragana: "ならう", en: "To learn", emoji: "🎹", category: "Verbs", exampleJp: "ピアノを習っています。", exampleHiragana: "ぴあのをならっています。", exampleEn: "I am learning piano." },
+      { jp: "忘れる", hiragana: "わすれる", en: "To forget", emoji: "🤔", category: "Verbs", exampleJp: "傘を忘れました。", exampleHiragana: "かさをわすれました。", exampleEn: "I forgot my umbrella." },
+      { jp: "覚える", hiragana: "おぼえる", en: "To remember / To memorize", emoji: "🧠", category: "Verbs", exampleJp: "新しい単語を覚えます。", exampleHiragana: "あたらしいたんごをおぼえます。", exampleEn: "I memorize new vocabulary." },
+      { jp: "考える", hiragana: "かんがえる", en: "To think / To consider", emoji: "💭", category: "Verbs", exampleJp: "将来のことを考えます。", exampleHiragana: "しょうらいのことをかんがえます。", exampleEn: "I think about the future." },
+      { jp: "会う", hiragana: "あう", en: "To meet", emoji: "🤝", category: "Verbs", exampleJp: "午後三時に駅で会いましょう。", exampleHiragana: "ごごさんじにえきであいましょう。", exampleEn: "Let's meet at the station at 3 PM." },
+      { jp: "洗う", hiragana: "あらう", en: "To wash", emoji: "🧼", category: "Verbs", exampleJp: "ご飯の前に手を洗います。", exampleHiragana: "ごはんのまえにてをあらいます。", exampleEn: "I wash my hands before eating." },
+      { jp: "言う", hiragana: "いう", en: "To say", emoji: "🗣️", category: "Verbs", exampleJp: "先生は「おはよう」と言いました。", exampleHiragana: "せんせいは「おはよう」といいました。", exampleEn: "The teacher said 'Good morning'." },
+      { jp: "入る", hiragana: "はいる", en: "To enter", emoji: "🚪", category: "Verbs", exampleJp: "温かいお風呂に入ります。", exampleHiragana: "あたたかいおふろにはいります。", exampleEn: "I take a warm bath." },
+      { jp: "出る", hiragana: "でる", en: "To leave / To exit", emoji: "📤", category: "Verbs", exampleJp: "毎朝七時に家を出ます。", exampleHiragana: "まいあさしちじにいえをでます。", exampleEn: "I leave home at 7 every morning." },
+      { jp: "立つ", hiragana: "たつ", en: "To stand up", emoji: "🧍", category: "Verbs", exampleJp: "名前を呼ばれて立ちました。", exampleHiragana: "なまえをよばれてたちました。", exampleEn: "I stood up when my name was called." },
+      { jp: "座る", hiragana: "すわる", en: "To sit down", emoji: "🪑", category: "Verbs", exampleJp: "どうぞ椅子に座ってください。", exampleHiragana: "どうぞいすにすわってください。", exampleEn: "Please take a seat." },
+      { jp: "歌う", hiragana: "うたう", en: "To sing", emoji: "🎤", category: "Verbs", exampleJp: "カラオケで歌を歌います。", exampleHiragana: "からおけでうたをうたいます。", exampleEn: "I sing songs at karaoke." },
+      { jp: "押す", hiragana: "おす", en: "To push / To press", emoji: "🔘", category: "Verbs", exampleJp: "エレベーターのボタンを押します。", exampleHiragana: "えれべーたーのぼたんをおします。", exampleEn: "I press the elevator button." },
+      { jp: "引く", hiragana: "ひく", en: "To pull", emoji: "🚪", category: "Verbs", exampleJp: "ドアを引いて開けます。", exampleHiragana: "どあをひいてあけます。", exampleEn: "I pull the door to open it." },
+      { jp: "貸す", hiragana: "かす", en: "To lend", emoji: "🤝", category: "Verbs", exampleJp: "友達に傘を貸しました。", exampleHiragana: "ともだちにかさをかしました。", exampleEn: "I lent an umbrella to my friend." },
+      { jp: "借りる", hiragana: "かりる", en: "To borrow", emoji: "📚", category: "Verbs", exampleJp: "図書館で三冊本を借りました。", exampleHiragana: "としょかんでさんさつほんをかりました。", exampleEn: "I borrowed three books from the library." },
+      { jp: "消す", hiragana: "けす", en: "To turn off / To erase", emoji: "💡", category: "Verbs", exampleJp: "寝る前に電気を消します。", exampleHiragana: "ねるまえにでんきをけします。", exampleEn: "I turn off the lights before sleeping." },
+      { jp: "点ける", hiragana: "つける", en: "To turn on", emoji: "🔦", category: "Verbs", exampleJp: "暗いので部屋の明かりを点けます。", exampleHiragana: "くらいのでへやのあかりをつけます。", exampleEn: "It is dark, so I turn on the light." },
+      { jp: "始まる", hiragana: "はじまる", en: "To begin / To start", emoji: "🎬", category: "Verbs", exampleJp: "授業は九時に始まります。", exampleHiragana: "じゅぎょうはくじにはじまります。", exampleEn: "Class starts at 9 o'clock." },
+      { jp: "終わる", hiragana: "おわる", en: "To end / To finish", emoji: "🏁", category: "Verbs", exampleJp: "仕事は五時に終わります。", exampleHiragana: "しごとはごじにおわります。", exampleEn: "Work finishes at 5 o'clock." },
+      { jp: "咲く", hiragana: "さく", en: "To bloom", emoji: "🌸", category: "Verbs", exampleJp: "庭の花が綺麗に咲きました。", exampleHiragana: "にわのはながきれいにさきました。", exampleEn: "The flowers in the garden bloomed beautifully." },
+      { jp: "頼む", hiragana: "たのむ", en: "To ask / To order", emoji: "📋", category: "Verbs", exampleJp: "レストランでラーメンを頼みます。", exampleHiragana: "れすとらんでらーめんをたのみます。", exampleEn: "I order ramen at the restaurant." },
+      { jp: "呼ぶ", hiragana: "よぶ", en: "To call / To invite", emoji: "🚕", category: "Verbs", exampleJp: "タクシーを一台呼びましょう。", exampleHiragana: "たくしーをいちだいよびましょう。", exampleEn: "Let's call a taxi." },
+      { jp: "飛ぶ", hiragana: "とぶ", en: "To fly", emoji: "🕊️", category: "Verbs", exampleJp: "鳥が空を飛んでいます。", exampleHiragana: "とりがそらをとんでいます。", exampleEn: "Birds are flying in the sky." },
+      { jp: "泣く", hiragana: "なく", en: "To cry", emoji: "😢", category: "Verbs", exampleJp: "赤ちゃんが泣いています。", exampleHiragana: "あかちゃんがないています。", exampleEn: "The baby is crying." },
+      { jp: "笑う", hiragana: "わらう", en: "To laugh / To smile", emoji: "😊", category: "Verbs", exampleJp: "みんなで楽しく笑いました。", exampleHiragana: "みんなでたのしくわらいました。", exampleEn: "We all laughed merrily together." },
+      { jp: "晴れる", hiragana: "はれる", en: "To clear up / Sunny", emoji: "☀️", category: "Verbs", exampleJp: "午後はいい天気に晴れます。", exampleHiragana: "ごごはいいてんきにはれます。", exampleEn: "It will clear up in the afternoon." },
+      { jp: "降る", hiragana: "ふる", en: "To fall (rain/snow)", emoji: "🌧️", category: "Verbs", exampleJp: "外で雨が降っています。", exampleHiragana: "そとであめがふっています。", exampleEn: "Rain is falling outside." },
+      { jp: "吹く", hiragana: "ふく", en: "To blow (wind)", emoji: "💨", category: "Verbs", exampleJp: "冷たい風が吹いています。", exampleHiragana: "つめたいかぜがふいています。", exampleEn: "A cold wind is blowing." },
+      { jp: "磨く", hiragana: "みがく", en: "To brush / To polish", emoji: "🪥", category: "Verbs", exampleJp: "毎食後に歯を磨きます。", exampleHiragana: "まいしょくごにはをみがきます。", exampleEn: "I brush my teeth after every meal." },
+      { jp: "脱ぐ", hiragana: "ぬぐ", en: "To take off (clothes/shoes)", emoji: "👟", category: "Verbs", exampleJp: "玄関で靴を脱ぎます。", exampleHiragana: "げんかんでくつをぬぎます。", exampleEn: "Take off your shoes at the entrance." },
+      { jp: "着る", hiragana: "きる", en: "To wear / To put on", emoji: "🧥", category: "Verbs", exampleJp: "寒いので上着を着ます。", exampleHiragana: "さむいのでうわぎをきます。", exampleEn: "I put on a coat because it's cold." },
+      { jp: "渡す", hiragana: "わたす", en: "To hand over / To hand in", emoji: "📄", category: "Verbs", exampleJp: "先生に宿題を渡します。", exampleHiragana: "せんせいにしゅくだいをわたします。", exampleEn: "I hand in my homework to the teacher." },
+      { jp: "渡る", hiragana: "わたる", en: "To cross", emoji: "🚸", category: "Verbs", exampleJp: "気をつけて横断歩道を渡ります。", exampleHiragana: "きをつけておうだんほどうをわたります。", exampleEn: "I cross the pedestrian crossing carefully." },
+      { jp: "登る", hiragana: "のぼる", en: "To climb", emoji: "🧗", category: "Verbs", exampleJp: "夏休みに富士山に登ります。", exampleHiragana: "なつやすみにふじさんにのぼります。", exampleEn: "I will climb Mt. Fuji during summer vacation." },
+      { jp: "止まる", hiragana: "とまる", en: "To stop", emoji: "🛑", category: "Verbs", exampleJp: "バスが停留所で止まります。", exampleHiragana: "ばすがていりゅうじょでとまります。", exampleEn: "The bus stops at the station." },
+      { jp: "置く", hiragana: "おく", en: "To place / To put", emoji: "📦", category: "Verbs", exampleJp: "机の上に本を置きます。", exampleHiragana: "つくえのうえにほんをおきます。", exampleEn: "I place the book on the desk." },
+      { jp: "始める", hiragana: "はじめる", en: "To start (something)", emoji: "▶️", category: "Verbs", exampleJp: "日本語の勉強を始めました。", exampleHiragana: "にほんごのべんきょうをはじめました。", exampleEn: "I started studying Japanese." },
+      { jp: "死ぬ", hiragana: "しぬ", en: "To die", emoji: "🍂", category: "Verbs", exampleJp: "秋になると草木が枯れて死にます。", exampleHiragana: "あきになるとくさきがかれてしにます。", exampleEn: "In autumn, the plants wither and die." },
+
+      // ================= NOUNS (115 Essential JLPT N5 Nouns) =================
+      { jp: "時間", hiragana: "じかん", en: "Time / Hour", emoji: "⏰", category: "Nouns", exampleJp: "あまり時間がありません。", exampleHiragana: "あまりじかんがありません。", exampleEn: "There isn't much time." },
+      { jp: "人", hiragana: "ひと", en: "Person / People", emoji: "👥", category: "Nouns", exampleJp: "あの人は誰ですか。", exampleHiragana: "あのひとはだれですか。", exampleEn: "Who is that person?" },
+      { jp: "友達", hiragana: "ともだち", en: "Friend", emoji: "👫", category: "Nouns", exampleJp: "友達と映画を見に行きます。", exampleHiragana: "ともだちとえいがをみにいきます。", exampleEn: "I go to see a movie with my friend." },
+      { jp: "家族", hiragana: "かぞく", en: "Family", emoji: "👨‍👩‍👧‍👦", category: "Nouns", exampleJp: "家族は四人です。", exampleHiragana: "かぞくはよにんです。", exampleEn: "There are four people in my family." },
+      { jp: "先生", hiragana: "せんせい", en: "Teacher / Doctor", emoji: "👩‍🏫", category: "Nouns", exampleJp: "先生に質問があります。", exampleHiragana: "せんせいにしつもんがあります。", exampleEn: "I have a question for the teacher." },
+      { jp: "学生", hiragana: "がくせい", en: "Student", emoji: "🎓", category: "Nouns", exampleJp: "私は日本語の学生です。", exampleHiragana: "わたしはにほんごのがくせいです。", exampleEn: "I am a Japanese language student." },
+      { jp: "学校", hiragana: "がっこう", en: "School", emoji: "🏫", category: "Nouns", exampleJp: "学校は八時半に始まります。", exampleHiragana: "がっこうははちじはんにはじまります。", exampleEn: "School starts at 8:30." },
+      { jp: "会社", hiragana: "かいしゃ", en: "Company / Office", emoji: "🏢", category: "Nouns", exampleJp: "電車で会社に行きます。", exampleHiragana: "でんしゃでかいしゃにいきます。", exampleEn: "I go to the office by train." },
+      { jp: "仕事", hiragana: "しごと", en: "Work / Job", emoji: "💼", category: "Nouns", exampleJp: "今の仕事がとても好きです。", exampleHiragana: "いまのしごとがとてもすきです。", exampleEn: "I really like my current job." },
+      { jp: "お金", hiragana: "おかね", en: "Money", emoji: "💴", category: "Nouns", exampleJp: "お金をおろしました。", exampleHiragana: "おかねをおろしました。", exampleEn: "I withdrew money." },
+      { jp: "水", hiragana: "みず", en: "Water", emoji: "💧", category: "Nouns", exampleJp: "冷たい水をください。", exampleHiragana: "つめたいみずをください。", exampleEn: "Cold water, please." },
+      { jp: "お茶", hiragana: "おちゃ", en: "Green tea / Tea", emoji: "🍵", category: "Nouns", exampleJp: "温かいお茶を飲みます。", exampleHiragana: "あたたかいおちゃをのみます。", exampleEn: "I drink warm green tea." },
+      { jp: "ご飯", hiragana: "ごはん", en: "Rice / Meal", emoji: "🍚", category: "Nouns", exampleJp: "一緒にご飯を食べましょう。", exampleHiragana: "いっしょにごはんをたべましょう。", exampleEn: "Let's eat a meal together." },
+      { jp: "魚", hiragana: "さかな", en: "Fish", emoji: "🐟", category: "Nouns", exampleJp: "市場で新鮮な魚を買いました。", exampleHiragana: "いちばでしんせんなさかなをかいました。", exampleEn: "I bought fresh fish at the market." },
+      { jp: "肉", hiragana: "にく", en: "Meat", emoji: "🥩", category: "Nouns", exampleJp: "野菜と肉を焼きます。", exampleHiragana: "やさいとにくをやきます。", exampleEn: "I grill vegetables and meat." },
+      { jp: "野菜", hiragana: "やさい", en: "Vegetables", emoji: "🥦", category: "Nouns", exampleJp: "体にいい野菜を食べます。", exampleHiragana: "からだにいいやさいをたべます。", exampleEn: "I eat vegetables that are good for the body." },
+      { jp: "果物", hiragana: "くだもの", en: "Fruit", emoji: "🍎", category: "Nouns", exampleJp: "甘い果物が好きです。", exampleHiragana: "あまいくだものがすきです。", exampleEn: "I like sweet fruit." },
+      { jp: "本", hiragana: "ほん", en: "Book", emoji: "📚", category: "Nouns", exampleJp: "図書館で本を借りました。", exampleHiragana: "としょかんでほんをかりました。", exampleEn: "I borrowed a book from the library." },
+      { jp: "新聞", hiragana: "しんぶん", en: "Newspaper", emoji: "📰", category: "Nouns", exampleJp: "毎朝新聞を読みます。", exampleHiragana: "まいあさしんぶんをよみます。", exampleEn: "I read the newspaper every morning." },
+      { jp: "手紙", hiragana: "てがみ", en: "Letter", emoji: "✉️", category: "Nouns", exampleJp: "祖母に手紙を書きました。", exampleHiragana: "そぼにてがみをかきました。", exampleEn: "I wrote a letter to my grandmother." },
+      { jp: "言葉", hiragana: "ことば", en: "Word / Language", emoji: "🗣️", category: "Nouns", exampleJp: "丁寧な言葉を使います。", exampleHiragana: "ていねいなことばをつかいます。", exampleEn: "I use polite language." },
+      { jp: "意味", hiragana: "いみ", en: "Meaning", emoji: "📖", category: "Nouns", exampleJp: "この漢字の意味は何ですか。", exampleHiragana: "このかんじのいみはなんですか。", exampleEn: "What is the meaning of this kanji?" },
+      { jp: "電話", hiragana: "でんわ", en: "Telephone / Phone call", emoji: "📱", category: "Nouns", exampleJp: "あとで電話をします。", exampleHiragana: "あとででんわをします。", exampleEn: "I will call you later." },
+      { jp: "電車", hiragana: "でんしゃ", en: "Train", emoji: "🚃", category: "Nouns", exampleJp: "日本の電車は便利です。", exampleHiragana: "にほんのでんしゃはべんりです。", exampleEn: "Japanese trains are convenient." },
+      { jp: "駅", hiragana: "えき", en: "Station", emoji: "🚉", category: "Nouns", exampleJp: "駅の前にカフェがあります。", exampleHiragana: "えきのまえにかふぇがあります。", exampleEn: "There is a cafe in front of the station." },
+      { jp: "車", hiragana: "くるま", en: "Car / Vehicle", emoji: "🚗", category: "Nouns", exampleJp: "週末は車で出かけます。", exampleHiragana: "しゅうまつはくるまででかけます。", exampleEn: "I go out by car on weekends." },
+      { jp: "飛行機", hiragana: "ひこうき", en: "Airplane", emoji: "🛫", category: "Nouns", exampleJp: "飛行機で北海道へ行きます。", exampleHiragana: "ひこうきでほっかいどうへいきます。", exampleEn: "I go to Hokkaido by airplane." },
+      { jp: "家", hiragana: "いえ", en: "House / Home", emoji: "🏡", category: "Nouns", exampleJp: "私の家は駅から近いです。", exampleHiragana: "わたしのいえはえきからちかいです。", exampleEn: "My house is close to the station." },
+      { jp: "部屋", hiragana: "へや", en: "Room", emoji: "🛏️", category: "Nouns", exampleJp: "部屋をきれいに掃除しました。", exampleHiragana: "へやをきれいにそうじしました。", exampleEn: "I cleaned my room nicely." },
+      { jp: "店", hiragana: "みせ", en: "Shop / Store", emoji: "🏪", category: "Nouns", exampleJp: "あの店はラーメンが有名です。", exampleHiragana: "あのみせはらーめんがゆうめいです。", exampleEn: "That shop is famous for ramen." },
+      { jp: "病院", hiragana: "びょういん", en: "Hospital", emoji: "🏥", category: "Nouns", exampleJp: "病院へ薬をもらいに行きます。", exampleHiragana: "びょういんへくすりをもらいにいきます。", exampleEn: "I go to the hospital to get medicine." },
+      { jp: "公園", hiragana: "こうえん", en: "Park", emoji: "🌳", category: "Nouns", exampleJp: "公園を散歩するのが好きです。", exampleHiragana: "こうえんをさんぽするのがすきです。", exampleEn: "I like taking walks in the park." },
+      { jp: "天気", hiragana: "てんき", en: "Weather", emoji: "🌤️", category: "Nouns", exampleJp: "明日の天気はどうですか。", exampleHiragana: "あしたのてんきはどうですか。", exampleEn: "How is tomorrow's weather?" },
+      { jp: "雨", hiragana: "あめ", en: "Rain", emoji: "☔", category: "Nouns", exampleJp: "午後から雨が降ります。", exampleHiragana: "ごごからあめがふります。", exampleEn: "It will rain from the afternoon." },
+      { jp: "雪", hiragana: "ゆき", en: "Snow", emoji: "❄️", category: "Nouns", exampleJp: "山に白い雪が積もっています。", exampleHiragana: "やまにしろいゆきがつもっています。", exampleEn: "White snow has piled up on the mountain." },
+      { jp: "空", hiragana: "そら", en: "Sky", emoji: "🌌", category: "Nouns", exampleJp: "青い空がとても綺麗です。", exampleHiragana: "あおいそらがとてもきれいです。", exampleEn: "The blue sky is very beautiful." },
+      { jp: "海", hiragana: "うみ", en: "Sea / Ocean", emoji: "🌊", category: "Nouns", exampleJp: "夏休みに海へ行きました。", exampleHiragana: "なつやすみにうみへいきました。", exampleEn: "I went to the sea during summer vacation." },
+      { jp: "山", hiragana: "やま", en: "Mountain", emoji: "⛰️", category: "Nouns", exampleJp: "富士山は日本で一番高い山です。", exampleHiragana: "ふじさんはにほんでいちばんたかいやまです。", exampleEn: "Mt. Fuji is the highest mountain in Japan." },
+      { jp: "川", hiragana: "かわ", en: "River", emoji: "🏞️", category: "Nouns", exampleJp: "きれいな川で魚が泳いでいます。", exampleHiragana: "きれいなかわでさかながおよいでいます。", exampleEn: "Fish are swimming in the clean river." },
+      { jp: "桜", hiragana: "さくら", en: "Cherry blossom", emoji: "🌸", category: "Nouns", exampleJp: "春になると桜が咲きます。", exampleHiragana: "はるになるとさくらがさきます。", exampleEn: "Cherry blossoms bloom when spring comes." },
+      { jp: "猫", hiragana: "ねこ", en: "Cat", emoji: "🐱", category: "Nouns", exampleJp: "窓の近くで猫が寝ています。", exampleHiragana: "まどのちかくでねこがねています。", exampleEn: "A cat is sleeping near the window." },
+      { jp: "犬", hiragana: "いぬ", en: "Dog", emoji: "🐶", category: "Nouns", exampleJp: "毎朝、犬と散歩します。", exampleHiragana: "まいあさ、いぬとさんぽします。", exampleEn: "I walk with my dog every morning." },
+      { jp: "音楽", hiragana: "おんがく", en: "Music", emoji: "🎵", category: "Nouns", exampleJp: "日本の音楽をよく聞きます。", exampleHiragana: "にほんのおんがくをよくききます。", exampleEn: "I often listen to Japanese music." },
+      { jp: "映画", hiragana: "えいが", en: "Movie", emoji: "🎬", category: "Nouns", exampleJp: "週末に映画を見ました。", exampleHiragana: "しゅうまつにえいがをみました。", exampleEn: "I watched a movie on the weekend." },
+      { jp: "旅行", hiragana: "りょこう", en: "Travel / Trip", emoji: "🧳", category: "Nouns", exampleJp: "家族と温泉旅行に行きます。", exampleHiragana: "かぞくとおんせんりょこうにいきます。", exampleEn: "I am going on a hot spring trip with my family." },
+      { jp: "日本", hiragana: "にほん", en: "Japan", emoji: "🗾", category: "Nouns", exampleJp: "日本文化に興味があります。", exampleHiragana: "にほんぶんかにきょうみがあります。", exampleEn: "I am interested in Japanese culture." },
+      { jp: "朝", hiragana: "あさ", en: "Morning", emoji: "🌅", category: "Nouns", exampleJp: "朝の空気は澄んでいます。", exampleHiragana: "あさのくうきはすんでいます。", exampleEn: "The morning air is crisp." },
+      { jp: "昼", hiragana: "ひる", en: "Noon / Daytime", emoji: "☀️", category: "Nouns", exampleJp: "昼にラーメンを食べます。", exampleHiragana: "ひるにらーめんをたべます。", exampleEn: "I eat ramen at noon." },
+      { jp: "晩", hiragana: "ばん", en: "Evening / Night", emoji: "🌆", category: "Nouns", exampleJp: "晩ご飯は何にしますか。", exampleHiragana: "ばんごはんにはんにしますか。", exampleEn: "What shall we have for dinner?" },
+      { jp: "夜", hiragana: "よる", en: "Night", emoji: "🌙", category: "Nouns", exampleJp: "夜は静かに本を読みます。", exampleHiragana: "よるはしずかにほんをよみます。", exampleEn: "I read books quietly at night." },
+      { jp: "時計", hiragana: "とけい", en: "Clock / Watch", emoji: "⌚", category: "Nouns", exampleJp: "壁の時計を見ました。", exampleHiragana: "かべのとけいをみました。", exampleEn: "I looked at the wall clock." },
+      { jp: "鞄", hiragana: "かばん", en: "Bag", emoji: "🎒", category: "Nouns", exampleJp: "黒い鞄にノートを入れます。", exampleHiragana: "くろいかばんにのーとをいれます。", exampleEn: "I put the notebook into the black bag." },
+      { jp: "鍵", hiragana: "かぎ", en: "Key", emoji: "🔑", category: "Nouns", exampleJp: "部屋の鍵をポケットに入れます。", exampleHiragana: "へやのかぎをぽけっとにいれます。", exampleEn: "I put the room key in my pocket." },
+      { jp: "傘", hiragana: "かさ", en: "Umbrella", emoji: "🌂", category: "Nouns", exampleJp: "雨が降るので傘を持って行きます。", exampleHiragana: "あめがふるのでかさをもってにいきます。", exampleEn: "It is raining, so I will take an umbrella." },
+      { jp: "財布", hiragana: "さいふ", en: "Wallet", emoji: "👛", category: "Nouns", exampleJp: "財布にお金を入れました。", exampleHiragana: "さいふにおかねをいれました。", exampleEn: "I put money into the wallet." },
+      { jp: "帽子", hiragana: "ぼうし", en: "Hat / Cap", emoji: "🧢", category: "Nouns", exampleJp: "日差しが強いので帽子をかぶります。", exampleHiragana: "ひざしがつよいのでぼうしをかぶります。", exampleEn: "The sun is strong, so I wear a hat." },
+      { jp: "服", hiragana: "ふく", en: "Clothes", emoji: "👕", category: "Nouns", exampleJp: "週末に新しい服を買いに行きます。", exampleHiragana: "しゅうまつにあたらしいふくをかいにいきます。", exampleEn: "I go to buy new clothes on the weekend." },
+      { jp: "靴", hiragana: "くつ", en: "Shoes", emoji: "👟", category: "Nouns", exampleJp: "歩きやすい靴を履きます。", exampleHiragana: "あるきやすいくつをはきます。", exampleEn: "I wear shoes that are easy to walk in." },
+      { jp: "鉛筆", hiragana: "えんぴつ", en: "Pencil", emoji: "✏️", category: "Nouns", exampleJp: "鉛筆で名前を書きます。", exampleHiragana: "えんぴつでなまえをかきます。", exampleEn: "I write my name with a pencil." },
+      { jp: "ペン", hiragana: "ぺん", en: "Pen", emoji: "🖊️", category: "Nouns", exampleJp: "黒いペンを一本貸してください。", exampleHiragana: "くろいぺんをいっぽんかしてください。", exampleEn: "Please lend me a black pen." },
+      { jp: "机", hiragana: "つくえ", en: "Desk", emoji: "🪵", category: "Nouns", exampleJp: "机の上にパソコンがあります。", exampleHiragana: "つくえのうえにぱそこんがあります。", exampleEn: "There is a computer on the desk." },
+      { jp: "椅子", hiragana: "いす", en: "Chair", emoji: "🪑", category: "Nouns", exampleJp: "座り心地のいい椅子です。", exampleHiragana: "すわりここちのいいいすです。", exampleEn: "It is a comfortable chair to sit in." },
+      { jp: "窓", hiragana: "まど", en: "Window", emoji: "🪟", category: "Nouns", exampleJp: "窓から富士山が見えます。", exampleHiragana: "まどからふじさんがみえます。", exampleEn: "Mt. Fuji can be seen from the window." },
+      { jp: "ドア", hiragana: "どあ", en: "Door", emoji: "🚪", category: "Nouns", exampleJp: "ドアを静かに閉めてください。", exampleHiragana: "どあをしずかにしめてください。", exampleEn: "Please close the door quietly." },
+      { jp: "庭", hiragana: "にわ", en: "Garden / Yard", emoji: "🏡", category: "Nouns", exampleJp: "家の庭に綺麗なお花があります。", exampleHiragana: "いえのにわにきれいなおはながあります。", exampleEn: "There are beautiful flowers in the house garden." },
+      { jp: "台所", hiragana: "だいどころ", en: "Kitchen", emoji: "🍳", category: "Nouns", exampleJp: "台所で母が料理を作っています。", exampleHiragana: "だいどころでははがりょうりをつくっています。", exampleEn: "Mother is making food in the kitchen." },
+      { jp: "お風呂", hiragana: "おふろ", en: "Bath", emoji: "🛁", category: "Nouns", exampleJp: "毎晩お風呂に入ります。", exampleHiragana: "まいばんおふろにはいります。", exampleEn: "I take a bath every evening." },
+      { jp: "トイレ", hiragana: "といれ", en: "Restroom / Toilet", emoji: "🚻", category: "Nouns", exampleJp: "トイレはどこにありますか。", exampleHiragana: "といれはどこにありますか。", exampleEn: "Where is the restroom?" },
+      { jp: "兄", hiragana: "あに", en: "Older brother", emoji: "👦", category: "Nouns", exampleJp: "兄は大学生です。", exampleHiragana: "あにはだいがくせいです。", exampleEn: "My older brother is a university student." },
+      { jp: "弟", hiragana: "おとうと", en: "Younger brother", emoji: "🧒", category: "Nouns", exampleJp: "弟と一緒にゲームをします。", exampleHiragana: "おとうといっしょにげーむをします。", exampleEn: "I play games together with my younger brother." },
+      { jp: "姉", hiragana: "あね", en: "Older sister", emoji: "👧", category: "Nouns", exampleJp: "姉は東京で働いています。", exampleHiragana: "あねはとうきょうではたらいています。", exampleEn: "My older sister works in Tokyo." },
+      { jp: "妹", hiragana: "いもうと", en: "Younger sister", emoji: "🧒", category: "Nouns", exampleJp: "妹は高校生です。", exampleHiragana: "いもうとはこうこうせいです。", exampleEn: "My younger sister is a high school student." },
+      { jp: "父", hiragana: "ちち", en: "Father", emoji: "👨", category: "Nouns", exampleJp: "父は会社員です。", exampleHiragana: "ちちはかいしゃいんです。", exampleEn: "My father is an office worker." },
+      { jp: "母", hiragana: "はは", en: "Mother", emoji: "👩", category: "Nouns", exampleJp: "母の料理はとても美味しいです。", exampleHiragana: "ははのりょうりはとてもおいしいです。", exampleEn: "My mother's cooking is very delicious." },
+      { jp: "子ども", hiragana: "こども", en: "Child / Children", emoji: "🧒", category: "Nouns", exampleJp: "子どもたちが元気に遊んでいます。", exampleHiragana: "こどもたちがげんきにあそんでいます。", exampleEn: "The children are playing cheerfully." },
+      { jp: "男", hiragana: "おとこ", en: "Man / Male", emoji: "👨", category: "Nouns", exampleJp: "背の高い男の人が来ました。", exampleHiragana: "せのたかいおとこのひとがきました。", exampleEn: "A tall man arrived." },
+      { jp: "女", hiragana: "おんな", en: "Woman / Female", emoji: "👩", category: "Nouns", exampleJp: "親切な女の人が道を教えてくれました。", exampleHiragana: "しんせつなおんなのひとがみちをおしえてくれました。", exampleEn: "A kind woman gave me directions." },
+      { jp: "男の子", hiragana: "おとこのこ", en: "Boy", emoji: "👦", category: "Nouns", exampleJp: "男の子がサッカーをしています。", exampleHiragana: "おとこのこがさっかーをしています。", exampleEn: "A boy is playing soccer." },
+      { jp: "女の子", hiragana: "おんなのこ", en: "Girl", emoji: "👧", category: "Nouns", exampleJp: "女の子が本を読んでいます。", exampleHiragana: "おんなのこがほんをよんでいます。", exampleEn: "A girl is reading a book." },
+      { jp: "名前", hiragana: "なまえ", en: "Name", emoji: "🏷️", category: "Nouns", exampleJp: "お名前を教えてください。", exampleHiragana: "おなまえをおしえてください。", exampleEn: "Please tell me your name." },
+      { jp: "国", hiragana: "くに", en: "Country", emoji: "🌐", category: "Nouns", exampleJp: "お国はどちらですか。", exampleHiragana: "おくにはどちらですか。", exampleEn: "Which country are you from?" },
+      { jp: "外国", hiragana: "がいこく", en: "Foreign country", emoji: "✈️", category: "Nouns", exampleJp: "外国へ旅行するのが好きです。", exampleHiragana: "がいこくへりょこうするのがすきです。", exampleEn: "I like traveling to foreign countries." },
+      { jp: "英語", hiragana: "えいご", en: "English language", emoji: "🔤", category: "Nouns", exampleJp: "英語を上手に話したいです。", exampleHiragana: "えいごをじょうずにはなしたいです。", exampleEn: "I want to speak English well." },
+      { jp: "日本語", hiragana: "にほんご", en: "Japanese language", emoji: "🇯🇵", category: "Nouns", exampleJp: "毎日日本語の単語を覚えます。", exampleHiragana: "まいにちにほんごのたんごをおぼえます。", exampleEn: "I memorize Japanese words every day." },
+      { jp: "質問", hiragana: "しつもん", en: "Question", emoji: "❓", category: "Nouns", exampleJp: "先生、質問があります。", exampleHiragana: "せんせい、しつもんがあります。", exampleEn: "Teacher, I have a question." },
+      { jp: "答え", hiragana: "こたえ", en: "Answer", emoji: "💡", category: "Nouns", exampleJp: "この問題の答えは何ですか。", exampleHiragana: "このもんだいのこたえはなんですか。", exampleEn: "What is the answer to this question?" },
+      { jp: "番号", hiragana: "ばんごう", en: "Number", emoji: "🔢", category: "Nouns", exampleJp: "電話番号をメモしました。", exampleHiragana: "でんわばんごうをめもしました。", exampleEn: "I took note of the phone number." },
+      { jp: "漢字", hiragana: "かんじ", en: "Kanji characters", emoji: "🈳", category: "Nouns", exampleJp: "毎日少しずつ漢字を練習します。", exampleHiragana: "まいにちすこしずつかんじをれんしゅうします。", exampleEn: "I practice kanji little by little every day." },
+      { jp: "ひらがな", hiragana: "ひらがな", en: "Hiragana syllabary", emoji: "あ", category: "Nouns", exampleJp: "ひらがなを全部覚えました。", exampleHiragana: "ひらがなをぜんぶおぼえました。", exampleEn: "I memorized all the hiragana." },
+      { jp: "カタカナ", hiragana: "かたかな", en: "Katakana syllabary", emoji: "ア", category: "Nouns", exampleJp: "外来語はカタカナで書きます。", exampleHiragana: "がいらいごはかたかなでかきます。", exampleEn: "Loan words are written in katakana." },
+      { jp: "薬", hiragana: "くすり", en: "Medicine", emoji: "💊", category: "Nouns", exampleJp: "食後にこの薬を飲んでください。", exampleHiragana: "しょくごにこのくすりをのんでください。", exampleEn: "Please take this medicine after eating." },
+      { jp: "医者", hiragana: "いしゃ", en: "Doctor", emoji: "🩺", category: "Nouns", exampleJp: "医者に診てもらいました。", exampleHiragana: "いしゃにみてもらいました。", exampleEn: "I was examined by a doctor." },
+      { jp: "手", hiragana: "て", en: "Hand", emoji: "✋", category: "Nouns", exampleJp: "手を綺麗に洗いましょう。", exampleHiragana: "てをきれいにあらいましょう。", exampleEn: "Let's wash our hands clean." },
+      { jp: "足", hiragana: "あし", en: "Foot / Leg", emoji: "🦶", category: "Nouns", exampleJp: "たくさん歩いて足が疲れました。", exampleHiragana: "たくさんあるいてあしがつかれました。", exampleEn: "My legs are tired from walking a lot." },
+      { jp: "目", hiragana: "め", en: "Eye", emoji: "👁️", category: "Nouns", exampleJp: "目が疲れたので少し休みます。", exampleHiragana: "めがつかれたのですこしやすみます。", exampleEn: "My eyes are tired so I will rest a little." },
+      { jp: "耳", hiragana: "みみ", en: "Ear", emoji: "👂", category: "Nouns", exampleJp: "耳を澄まして鳥の声を聞きます。", exampleHiragana: "みみをすましてとりのこえをききます。", exampleEn: "I listen carefully to the birds' chirping." },
+      { jp: "口", hiragana: "くち", en: "Mouth", emoji: "👄", category: "Nouns", exampleJp: "口を大きく開けてください。", exampleHiragana: "くちをおおきくあけてください。", exampleEn: "Please open your mouth wide." },
+      { jp: "鼻", hiragana: "はな", en: "Nose", emoji: "👃", category: "Nouns", exampleJp: "花のいい匂いが鼻に届きました。", exampleHiragana: "はなのいいにおいがはナにとどきました。", exampleEn: "The nice scent of flowers reached my nose." },
+      { jp: "顔", hiragana: "かお", en: "Face", emoji: "🙂", category: "Nouns", exampleJp: "朝起きて顔を洗います。", exampleHiragana: "あさおきてかおをあらいます。", exampleEn: "I wake up in the morning and wash my face." },
+      { jp: "頭", hiragana: "あたま", en: "Head", emoji: "🧠", category: "Nouns", exampleJp: "少し頭が痛いです。", exampleHiragana: "すこしあたまがいたいです。", exampleEn: "I have a slight headache." },
+      { jp: "体", hiragana: "からだ", en: "Body / Health", emoji: "🧍", category: "Nouns", exampleJp: "体に気をつけて過ごしてください。", exampleHiragana: "からだにきをつけてすごしてください。", exampleEn: "Please take care of your health." },
+      { jp: "自転車", hiragana: "じてんしゃ", en: "Bicycle", emoji: "🚲", category: "Nouns", exampleJp: "自転車で駅まで通っています。", exampleHiragana: "じてんしゃでえきまでかよっています。", exampleEn: "I commute to the station by bicycle." },
+      { jp: "バス", hiragana: "ばす", en: "Bus", emoji: "🚌", category: "Nouns", exampleJp: "バスに乗って美術館へ行きます。", exampleHiragana: "ばすにのってびじゅつかんへいきます。", exampleEn: "I take the bus to go to the art museum." },
+      { jp: "タクシー", hiragana: "たくしー", en: "Taxi", emoji: "🚕", category: "Nouns", exampleJp: "荷物が多いのでタクシーに乗ります。", exampleHiragana: "にもつがおおいのでたくしーにのります。", exampleEn: "I take a taxi because I have lots of luggage." },
+      { jp: "地下鉄", hiragana: "ちかてつ", en: "Subway", emoji: "🚇", category: "Nouns", exampleJp: "東京の地下鉄はとても便利です。", exampleHiragana: "とうきょうのちかてつはとてもべんりです。", exampleEn: "The Tokyo subway is very convenient." },
+      { jp: "切符", hiragana: "きっぷ", en: "Ticket", emoji: "🎫", category: "Nouns", exampleJp: "駅の券売機で切符を買います。", exampleHiragana: "えきのけんばいきできっぷをかいます。", exampleEn: "I buy a ticket at the station vending machine." },
+      { jp: "荷物", hiragana: "にもつ", en: "Luggage / Baggage", emoji: "📦", category: "Nouns", exampleJp: "重い荷物を運びました。", exampleHiragana: "おもいにもつをはこびました。", exampleEn: "I carried the heavy luggage." },
+      { jp: "写真", hiragana: "しゃしん", en: "Photograph", emoji: "📷", category: "Nouns", exampleJp: "ここで写真を撮ってもいいですか。", exampleHiragana: "ここでしゃしんをとってもいいですか。", exampleEn: "May I take a photo here?" },
+      { jp: "カメラ", hiragana: "かめら", en: "Camera", emoji: "📸", category: "Nouns", exampleJp: "新しいカメラを買いました。", exampleHiragana: "あたらしいかめらをかいました。", exampleEn: "I bought a new camera." },
+      { jp: "カレンダー", hiragana: "かれんだー", en: "Calendar", emoji: "🗓️", category: "Nouns", exampleJp: "壁のカレンダーに印をつけます。", exampleHiragana: "かべのかれんだーにしるしをつけます。", exampleEn: "I make a mark on the wall calendar." },
+      { jp: "手帳", hiragana: "てちょう", en: "Notebook / Planner", emoji: "📔", category: "Nouns", exampleJp: "予定を手帳に書き留めます。", exampleHiragana: "よていをてちょうにかきとめます。", exampleEn: "I write down my schedule in my planner." },
+      { jp: "辞書", hiragana: "じしょ", en: "Dictionary", emoji: "📕", category: "Nouns", exampleJp: "わからない単語を辞書で調べます。", exampleHiragana: "わからないたんごをじしょでしらべます。", exampleEn: "I look up words I don't know in the dictionary." },
+      { jp: "雑誌", hiragana: "ざっし", en: "Magazine", emoji: "📰", category: "Nouns", exampleJp: "カフェでファッション雑誌を読みました。", exampleHiragana: "かふぇでふぁっしょんざっしをよみました。", exampleEn: "I read a fashion magazine at the cafe." },
+      { jp: "切手", hiragana: "きって", en: "Postage stamp", emoji: "📮", category: "Nouns", exampleJp: "手紙に切手を貼ります。", exampleHiragana: "てがみにきってをはります。", exampleEn: "I put a stamp on the letter." },
+      { jp: "封筒", hiragana: "ふうとう", en: "Envelope", emoji: "✉️", category: "Nouns", exampleJp: "手紙を封筒に入れました。", exampleHiragana: "てがみをふうとうにいれました。", exampleEn: "I put the letter in the envelope." },
+
+      // ================= ADJECTIVES (50 Essential JLPT N5 Adjectives) =================
+      { jp: "大きい", hiragana: "おおきい", en: "Big / Large", emoji: "🐘", category: "Adjectives", exampleJp: "大きなかばんを買いました。", exampleHiragana: "おおきなかばんをかいました。", exampleEn: "I bought a large bag." },
+      { jp: "小さい", hiragana: "ちいさい", en: "Small / Little", emoji: "🐁", category: "Adjectives", exampleJp: "小さい子どもが走っています。", exampleHiragana: "ちいさいこどもがはしっています。", exampleEn: "A small child is running." },
+      { jp: "新しい", hiragana: "あたらしい", en: "New", emoji: "✨", category: "Adjectives", exampleJp: "新しいパソコンが欲しいです。", exampleHiragana: "あたらしいぱそこんがほしいです。", exampleEn: "I want a new computer." },
+      { jp: "古い", hiragana: "ふるい", en: "Old (things)", emoji: "🏛️", category: "Adjectives", exampleJp: "京都には古いお寺が多いです。", exampleHiragana: "きょうとにはふるいおてらがおおいです。", exampleEn: "There are many old temples in Kyoto." },
+      { jp: "良い", hiragana: "よい / いい", en: "Good / Fine", emoji: "👍", category: "Adjectives", exampleJp: "今日はとても良い天気です。", exampleHiragana: "きょうはとてもよいてんきです。", exampleEn: "The weather is very nice today." },
+      { jp: "悪い", hiragana: "わるい", en: "Bad", emoji: "👎", category: "Adjectives", exampleJp: "体の調子が少し悪いです。", exampleHiragana: "からだのちょうしがすこしわるいです。", exampleEn: "My physical condition is a bit bad." },
+      { jp: "高い", hiragana: "たかい", en: "High / Tall / Expensive", emoji: "💎", category: "Adjectives", exampleJp: "この時計はとても高いです。", exampleHiragana: "このとけいはとてもたかいです。", exampleEn: "This watch is very expensive." },
+      { jp: "安い", hiragana: "やすい", en: "Cheap / Inexpensive", emoji: "🏷️", category: "Adjectives", exampleJp: "このスーパーは野菜が安いです。", exampleHiragana: "このすーぱーはやさいがやすいです。", exampleEn: "Vegetables are cheap at this supermarket." },
+      { jp: "暑い", hiragana: "あつい", en: "Hot (weather)", emoji: "☀️", category: "Adjectives", exampleJp: "日本の夏はとても暑いです。", exampleHiragana: "にほんのなつはとてもあついです。", exampleEn: "Summer in Japan is very hot." },
+      { jp: "寒い", hiragana: "さむい", en: "Cold (weather)", emoji: "🥶", category: "Adjectives", exampleJp: "今日は外が寒いですね。", exampleHiragana: "きょうはそとがさむいですね。", exampleEn: "It is cold outside today, isn't it?" },
+      { jp: "美味しい", hiragana: "おいしい", en: "Delicious / Tasty", emoji: "😋", category: "Adjectives", exampleJp: "この寿司は本当に美味しいです。", exampleHiragana: "このすしはほんとうにおいしいです。", exampleEn: "This sushi is truly delicious." },
+      { jp: "面白い", hiragana: "おもしろい", en: "Interesting / Funny", emoji: "😄", category: "Adjectives", exampleJp: "とても面白い本を読みました。", exampleHiragana: "とてもおもしろいほんをよみました。", exampleEn: "I read a very interesting book." },
+      { jp: "忙しい", hiragana: "いそがしい", en: "Busy", emoji: "🏃💨", category: "Adjectives", exampleJp: "今週は仕事が忙しいです。", exampleHiragana: "こんしゅうはしごとがいそがしいです。", exampleEn: "Work is busy this week." },
+      { jp: "楽しい", hiragana: "たのしい", en: "Fun / Enjoyable", emoji: "🎉", category: "Adjectives", exampleJp: "日本語の勉強は楽しいです。", exampleHiragana: "にほんごのべんきょうはたのしいです。", exampleEn: "Studying Japanese is fun." },
+      { jp: "難しい", hiragana: "むずかしい", en: "Difficult / Hard", emoji: "🧩", category: "Adjectives", exampleJp: "この試験は少し難しいです。", exampleHiragana: "このしけんはすこしむずかしいです。", exampleEn: "This exam is a little difficult." },
+      { jp: "優しい", hiragana: "やさしい", en: "Kind / Gentle / Easy", emoji: "🤗", category: "Adjectives", exampleJp: "彼女はいつも優しいです。", exampleHiragana: "かのじょはいつもやさしいです。", exampleEn: "She is always kind." },
+      { jp: "早い", hiragana: "はやい", en: "Early / Fast", emoji: "⚡", category: "Adjectives", exampleJp: "新幹線はとても速いです。", exampleHiragana: "しんかんせんはとてもはやいです。", exampleEn: "The bullet train is very fast." },
+      { jp: "近い", hiragana: "ちかい", en: "Near / Close", emoji: "📍", category: "Adjectives", exampleJp: "駅から近いホテルに泊まります。", exampleHiragana: "えきからちかいほてるにとまります。", exampleEn: "I stay at a hotel close to the station." },
+      { jp: "遠い", hiragana: "とおい", en: "Far / Distant", emoji: "🔭", category: "Adjectives", exampleJp: "空港はここから遠いです。", exampleHiragana: "くうこうはここからとおいです。", exampleEn: "The airport is far from here." },
+      { jp: "好き", hiragana: "すき", en: "Liked / Favorite", emoji: "💖", category: "Adjectives", exampleJp: "私は抹茶のアイスが好きです。", exampleHiragana: "わたしはまっちゃのあいすがすきです。", exampleEn: "I like matcha ice cream." },
+      { jp: "綺麗", hiragana: "きれい", en: "Beautiful / Clean", emoji: "✨", category: "Adjectives", exampleJp: "夜景がとても綺麗ですね。", exampleHiragana: "やけいがとてもきれいですね。", exampleEn: "The night view is very beautiful." },
+      { jp: "静か", hiragana: "しずか", en: "Quiet / Peaceful", emoji: "🤫", category: "Adjectives", exampleJp: "ここは静かな図書館です。", exampleHiragana: "ここはしずかなとしょかんです。", exampleEn: "This is a quiet library." },
+      { jp: "元気", hiragana: "げんき", en: "Healthy / Energetic", emoji: "💪", category: "Adjectives", exampleJp: "いつも元気な挨拶をします。", exampleHiragana: "いつもげんきなあいさつをします。", exampleEn: "I always give an energetic greeting." },
+      { jp: "便利", hiragana: "べんり", en: "Convenient / Useful", emoji: "🛠️", category: "Adjectives", exampleJp: "このアプリはとても便利です。", exampleHiragana: "このあぷりはとてもべんりです。", exampleEn: "This app is very convenient." },
+      { jp: "有名", hiragana: "ゆうめい", en: "Famous", emoji: "🌟", category: "Adjectives", exampleJp: "ここは有名な観光地です。", exampleHiragana: "ここはゆうめいなかんこうちです。", exampleEn: "This is a famous sightseeing spot." },
+      { jp: "長い", hiragana: "ながい", en: "Long", emoji: "📏", category: "Adjectives", exampleJp: "長い手紙を書きました。", exampleHiragana: "ながいてがみをかきました。", exampleEn: "I wrote a long letter." },
+      { jp: "短い", hiragana: "みじかい", en: "Short (length)", emoji: "📐", category: "Adjectives", exampleJp: "髪を短く切りました。", exampleHiragana: "かみをみじかくきりました。", exampleEn: "I cut my hair short." },
+      { jp: "重い", hiragana: "おもい", en: "Heavy", emoji: "🏋️", category: "Adjectives", exampleJp: "このスーツケースは重いです。", exampleHiragana: "このすーつけーすはおもいです。", exampleEn: "This suitcase is heavy." },
+      { jp: "軽い", hiragana: "かるい", en: "Light (weight)", emoji: "🪶", category: "Adjectives", exampleJp: "このノートパソコンはとても軽いです。", exampleHiragana: "こののーとぱそこんはとてもかるいです。", exampleEn: "This laptop is very light." },
+      { jp: "明るい", hiragana: "あかるい", en: "Bright / Cheerful", emoji: "💡", category: "Adjectives", exampleJp: "明るい部屋で勉強します。", exampleHiragana: "あかるいへやでべんきょうします。", exampleEn: "I study in a bright room." },
+      { jp: "暗い", hiragana: "くらい", en: "Dark / Dim", emoji: "🌑", category: "Adjectives", exampleJp: "道が暗いので懐中電灯をつけます。", exampleHiragana: "みちがくらいのでかいちゅうでんとうをつけます。", exampleEn: "The road is dark, so I turn on the flashlight." },
+      { jp: "広い", hiragana: "ひろい", en: "Spacious / Wide", emoji: "🏕️", category: "Adjectives", exampleJp: "この公園はとても広いです。", exampleHiragana: "このこうえんはとてもひろいです。", exampleEn: "This park is very spacious." },
+      { jp: "狭い", hiragana: "せまい", en: "Narrow / Cramped", emoji: "🚪", category: "Adjectives", exampleJp: "私の部屋は少し狭いです。", exampleHiragana: "わたしのへやはすこしせまいです。", exampleEn: "My room is a bit narrow." },
+      { jp: "暖かい", hiragana: "あたたかい", en: "Warm (weather/food)", emoji: "☕", category: "Adjectives", exampleJp: "春は暖かくて気持ちがいいです。", exampleHiragana: "はるはあたたかくてきもちがいいです。", exampleEn: "Spring is warm and pleasant." },
+      { jp: "涼しい", hiragana: "すずしい", en: "Cool (refreshing)", emoji: "🍃", category: "Adjectives", exampleJp: "秋の夜は涼しい風が吹きます。", exampleHiragana: "あきのよるはすずしいかぜがふきます。", exampleEn: "A cool breeze blows on autumn nights." },
+      { jp: "痛い", hiragana: "いたい", en: "Painful / Hurt", emoji: "🩹", category: "Adjectives", exampleJp: "足が少し痛いです。", exampleHiragana: "あしがすこしいたいです。", exampleEn: "My foot hurts a little." },
+      { jp: "辛い", hiragana: "からい", en: "Spicy / Hot", emoji: "🌶️", category: "Adjectives", exampleJp: "このカレーはとても辛いです。", exampleHiragana: "このかれーはとてもからいです。", exampleEn: "This curry is very spicy." },
+      { jp: "甘い", hiragana: "あまい", en: "Sweet", emoji: "🍰", category: "Adjectives", exampleJp: "甘いお菓子が大好きです。", exampleHiragana: "あまいおかしがだいすきです。", exampleEn: "I love sweet snacks." },
+      { jp: "苦い", hiragana: "にがい", en: "Bitter", emoji: "☕", category: "Adjectives", exampleJp: "ブラックコーヒーは少し苦いです。", exampleHiragana: "ぶらっくこーひーはすこしにがいです。", exampleEn: "Black coffee is a bit bitter." },
+      { jp: "暇", hiragana: "ひま", en: "Free time / Not busy", emoji: "🛋️", category: "Adjectives", exampleJp: "明日は一日中暇です。", exampleHiragana: "あしたはいちにちじゅうひまです。", exampleEn: "I am free all day tomorrow." },
+      { jp: "親切", hiragana: "しんせつ", en: "Kind / Helpful", emoji: "🤝", category: "Adjectives", exampleJp: "駅員さんはとても親切でした。", exampleHiragana: "えきいんさんはとてもしんせつでした。", exampleEn: "The station attendant was very kind." },
+      { jp: "嫌い", hiragana: "きらい", en: "Disliked / Hated", emoji: "🙅", category: "Adjectives", exampleJp: "トマトがあまり好きではありません。", exampleHiragana: "とまとがあまりすきではありません。", exampleEn: "I dislike tomatoes." },
+      { jp: "上手", hiragana: "じょうず", en: "Skillful / Good at", emoji: "🎯", category: "Adjectives", exampleJp: "彼女は日本語がとても上手です。", exampleHiragana: "かのじょはにほんごがとてもじょうずです。", exampleEn: "She is very good at Japanese." },
+      { jp: "下手", hiragana: "へた", en: "Unskillful / Poor at", emoji: "😅", category: "Adjectives", exampleJp: "私は絵を描くのが下手です。", exampleHiragana: "わたしはえをかくのがへたです。", exampleEn: "I am poor at drawing pictures." },
+      { jp: "大変", hiragana: "たいへん", en: "Tough / Hard / Severe", emoji: "💦", category: "Adjectives", exampleJp: "毎日残業で大変です。", exampleHiragana: "まいにちざんぎょうでたいへんです。", exampleEn: "It is tough working overtime every day." },
+      { jp: "大切", hiragana: "たいせつ", en: "Important / Precious", emoji: "💎", category: "Adjectives", exampleJp: "家族の時間はとても大切です。", exampleHiragana: "かぞくのじかんはとてもたいせつです。", exampleEn: "Family time is very precious." },
+      { jp: "賑やか", hiragana: "にぎやか", en: "Lively / Bustling", emoji: "🏮", category: "Adjectives", exampleJp: "新宿の夜はとても賑やかです。", exampleHiragana: "しんじゅくのよるはとてもにぎやかです。", exampleEn: "Shinjuku at night is very bustling." },
+      { jp: "危険", hiragana: "きけん", en: "Dangerous / Hazardous", emoji: "⚠️", category: "Adjectives", exampleJp: "この道路を渡るのは危険です。", exampleHiragana: "このどうろをわたるのはきけんです。", exampleEn: "Crossing this road is dangerous." },
+      { jp: "不便", hiragana: "ふべん", en: "Inconvenient", emoji: "🚧", category: "Adjectives", exampleJp: "近くにスーパーがなくて不便です。", exampleHiragana: "ちかくにすーぱーがなくてふべんです。", exampleEn: "It is inconvenient without a supermarket nearby." },
+      { jp: "丈夫", hiragana: "じょうぶ", en: "Sturdy / Durable / Strong", emoji: "🛡️", category: "Adjectives", exampleJp: "この靴はとても丈夫です。", exampleHiragana: "このくつはとてもじょうぶです。", exampleEn: "These shoes are very sturdy." },
+
+      // ================= EXPRESSIONS & GREETINGS (30 Essential JLPT N5 Expressions) =================
+      { jp: "ありがとう", hiragana: "ありがとう", en: "Thank you", emoji: "🙏", category: "Expressions", exampleJp: "手伝ってくれてありがとう。", exampleHiragana: "てつだってくれてありがとう。", exampleEn: "Thank you for helping me." },
+      { jp: "すみません", hiragana: "すみません", en: "Excuse me / I'm sorry", emoji: "🙇", category: "Expressions", exampleJp: "すみません、水をください。", exampleHiragana: "すみません、みずをください。", exampleEn: "Excuse me, water please." },
+      { jp: "いただきます", hiragana: "いただきます", en: "Thank you for the meal (before eating)", emoji: "🥢", category: "Expressions", exampleJp: "それでは、いただきます。", exampleHiragana: "それでは、いただきます。", exampleEn: "Well then, let's eat." },
+      { jp: "ごちそうさま", hiragana: "ごちそうさま", en: "Thank you for the meal (after eating)", emoji: "🍵", category: "Expressions", exampleJp: "美味しかったです、ごちそうさま。", exampleHiragana: "おいしかったです、ごちそうさま。", exampleEn: "It was delicious, thank you for the meal." },
+      { jp: "大丈夫", hiragana: "だいじょうぶ", en: "Okay / All right", emoji: "🆗", category: "Expressions", exampleJp: "心配しないで、大丈夫です。", exampleHiragana: "しんぱいしないで、だいじょうぶです。", exampleEn: "Don't worry, it's all right." },
+      { jp: "おはようございます", hiragana: "おはようございます", en: "Good morning (polite)", emoji: "🌅", category: "Expressions", exampleJp: "先生、おはようございます。", exampleHiragana: "せんせい、おはようございます。", exampleEn: "Good morning, teacher." },
+      { jp: "こんにちは", hiragana: "こんにちは", en: "Hello / Good afternoon", emoji: "☀️", category: "Expressions", exampleJp: "皆さん、こんにちは。", exampleHiragana: "みなさん、こんにちは。", exampleEn: "Hello, everyone." },
+      { jp: "こんばんは", hiragana: "こんばんは", en: "Good evening", emoji: "🌆", category: "Expressions", exampleJp: "こんばんは、いいお天気ですね。", exampleHiragana: "こんばんは、いいおてんきですね。", exampleEn: "Good evening, nice weather isn't it?" },
+      { jp: "おやすみなさい", hiragana: "おやすみなさい", en: "Good night", emoji: "🌙", category: "Expressions", exampleJp: "また明日、おやすみなさい。", exampleHiragana: "またあした、おやすみなさい。", exampleEn: "See you tomorrow, good night." },
+      { jp: "さようなら", hiragana: "さようなら", en: "Goodbye / Farewell", emoji: "👋", category: "Expressions", exampleJp: "それでは、さようなら。", exampleHiragana: "それでは、さようなら。", exampleEn: "Well then, goodbye." },
+      { jp: "はじめまして", hiragana: "はじめまして", en: "Nice to meet you (first time)", emoji: "🤝", category: "Expressions", exampleJp: "はじめまして、田中と申します。", exampleHiragana: "はじめまして、たなかともうします。", exampleEn: "Nice to meet you, my name is Tanaka." },
+      { jp: "どうぞよろしく", hiragana: "どうぞよろしく", en: "Pleased to meet you / Looking forward to working with you", emoji: "🙇‍♂️", category: "Expressions", exampleJp: "これからどうぞよろしくお願いします。", exampleHiragana: "これからどうぞよろしくおねがいします。", exampleEn: "I look forward to working with you from now on." },
+      { jp: "お願いします", hiragana: "おねがいします", en: "Please (requesting)", emoji: "🤲", category: "Expressions", exampleJp: "コーヒーを一つお願いします。", exampleHiragana: "こーひーをひとつおねがいします。", exampleEn: "One coffee, please." },
+      { jp: "いってきます", hiragana: "いってきます", en: "I'm leaving / See you later", emoji: "🚪", category: "Expressions", exampleJp: "会社へいってきます。", exampleHiragana: "かいしゃへいってきます。", exampleEn: "I am heading out to the office." },
+      { jp: "いってらっしゃい", hiragana: "いってらっしゃい", en: "Take care / Have a good day", emoji: "🏠", category: "Expressions", exampleJp: "気をつけていってらっしゃい。", exampleHiragana: "きをつけていってらっしゃい。", exampleEn: "Take care and have a nice day." },
+      { jp: "ただいま", hiragana: "ただいま", en: "I'm home / I'm back", emoji: "🔑", category: "Expressions", exampleJp: "ただいま、帰りました。", exampleHiragana: "ただいま、かえりました。", exampleEn: "I'm home, I have returned." },
+      { jp: "おかえりなさい", hiragana: "おかえりなさい", en: "Welcome home", emoji: "🏡", category: "Expressions", exampleJp: "おかえりなさい、お疲れ様でした。", exampleHiragana: "おかえりなさい、おつかれさまでした。", exampleEn: "Welcome home, good work today." },
+      { jp: "どういたしまして", hiragana: "どういたしまして", en: "You're welcome", emoji: "😊", category: "Expressions", exampleJp: "いいえ、どういたしまして。", exampleHiragana: "いいえ、どういたしまして。", exampleEn: "No problem, you're welcome." },
+      { jp: "ごめんなさい", hiragana: "ごめんなさい", en: "I'm sorry (apology)", emoji: "🙇‍♀️", category: "Expressions", exampleJp: "遅れてしまってごめんなさい。", exampleHiragana: "おくれてしまってごめんなさい。", exampleEn: "I'm sorry for being late." },
+      { jp: "失礼します", hiragana: "しつれいします", en: "Excuse me (entering/leaving)", emoji: "🚪", category: "Expressions", exampleJp: "お先に失礼します。", exampleHiragana: "おさきにしつれいします。", exampleEn: "I will be excusing myself ahead of you." },
+      { jp: "お疲れ様でした", hiragana: "おつかれさまでした", en: "Thank you for your hard work", emoji: "🍻", category: "Expressions", exampleJp: "今日の仕事はお疲れ様でした。", exampleHiragana: "きょうのしごとはおつかれさまでした。", exampleEn: "Thank you for your hard work today." },
+      { jp: "もしもし", hiragana: "もしもし", en: "Hello (on the phone)", emoji: "📞", category: "Expressions", exampleJp: "もしもし、山田です。", exampleHiragana: "もしもし、やまだです。", exampleEn: "Hello, this is Yamada." },
+      { jp: "おめでとうございます", hiragana: "おめでとうございます", en: "Congratulations", emoji: "🎊", category: "Expressions", exampleJp: "お誕生日おめでとうございます。", exampleHiragana: "おたんじょうびおめでとうございます。", exampleEn: "Happy birthday to you!" },
+      { jp: "はい", hiragana: "はい", en: "Yes", emoji: "✔️", category: "Expressions", exampleJp: "はい、わかりました。", exampleHiragana: "はい、わかりました。", exampleEn: "Yes, I understand." },
+      { jp: "いいえ", hiragana: "いいえ", en: "No", emoji: "❌", category: "Expressions", exampleJp: "いいえ、違います。", exampleHiragana: "いいえ、ちがいます。", exampleEn: "No, that's not it." },
+      { jp: "どうぞ", hiragana: "どうぞ", en: "Please / Go ahead / Here you are", emoji: "🤲", category: "Expressions", exampleJp: "どうぞお座りください。", exampleHiragana: "どうぞおすわりください。", exampleEn: "Please, go ahead and sit." },
+      { jp: "どうも", hiragana: "どうも", en: "Thanks / Somehow", emoji: "👋", category: "Expressions", exampleJp: "どうもありがとうございました。", exampleHiragana: "どうもありがとうございました。", exampleEn: "Thank you very much." },
+      { jp: "少し", hiragana: "すこし", en: "A little / A few", emoji: "🤏", category: "Expressions", exampleJp: "少し休んでください。", exampleHiragana: "すこしやすんでください。", exampleEn: "Please rest a little." },
+      { jp: "たくさん", hiragana: "たくさん", en: "A lot / Many", emoji: "🧺", category: "Expressions", exampleJp: "写真をたくさん撮りました。", exampleHiragana: "しゃしんをたくさんとりました。", exampleEn: "I took a lot of photos." },
+      { jp: "ゆっくり", hiragana: "ゆっくり", en: "Slowly / Leisurely", emoji: "🐢", category: "Expressions", exampleJp: "もっとゆっくり話してください。", exampleHiragana: "もっとゆっくりはなしてください。", exampleEn: "Please speak more slowly." }
+    ];
+
+    const STORAGE_KEY_CUSTOM = 'kotovibe_n5_deck_v4';
+    const STORAGE_KEY_STREAK = 'kotovibe_best_streak_v4';
+
+    // App State
+    let deck = [];
+    let activeCategory = 'All';
+    let currentCardIndex = 0;
+    let isFlipped = false;
+    let showFrontHiragana = false; // Hidden by default
+    let currentStreak = 0;
+    let bestStreak = 0;
+    let totalQuizScore = 0;
+    let currentQuizCorrectCard = null;
+    let quizAnswered = false;
+    let quizDirection = 'EN_TO_JP'; // 'EN_TO_JP' shows Japanese choices; 'JP_TO_EN' shows English choices
+
+    // Load deck and purge any legacy placeholder keys
+    function loadDeck() {
+      try {
+        // Purge any old storage keys from earlier versions
+        localStorage.removeItem('kotovibe_custom_words');
+        localStorage.removeItem('kotovibe_real_deck_v3');
+        
+        const savedCustom = localStorage.getItem(STORAGE_KEY_CUSTOM);
+        let customWords = savedCustom ? JSON.parse(savedCustom) : [];
+        // Filter out any accidental invalid items
+        customWords = customWords.filter(item => item && item.jp && !String(item.en).includes('Core Vocabulary Term'));
+        deck = [...customWords, ...CORE_2000_DATABASE];
+        
+        const savedBest = localStorage.getItem(STORAGE_KEY_STREAK);
+        if (savedBest) bestStreak = parseInt(savedBest, 10) || 0;
+      } catch (e) {
+        deck = [...CORE_2000_DATABASE];
+      }
+      updateStatsUI();
+      renderCurrentCard();
+      renderBrowseList(deck);
+    }
+
+    function saveCustomWord(newCard) {
+      try {
+        const savedCustom = localStorage.getItem(STORAGE_KEY_CUSTOM);
+        let customWords = savedCustom ? JSON.parse(savedCustom) : [];
+        customWords.unshift(newCard);
+        localStorage.setItem(STORAGE_KEY_CUSTOM, JSON.stringify(customWords));
+      } catch (e) {}
+    }
+
+    function updateStatsUI() {
+      const totalCountEl = document.getElementById('total-deck-count');
+      if (totalCountEl) totalCountEl.textContent = deck.length;
+      document.getElementById('streak-count').textContent = currentStreak;
+      document.getElementById('best-streak-display').textContent = `✅ ${totalQuizScore} • 🔥 ${bestStreak}`;
+    }
+
+    // Filter by Category
+    function filterCategory(cat) {
+      activeCategory = cat;
+      ['All', 'Verbs', 'Nouns', 'Adjectives', 'Expressions'].forEach(c => {
+        const btn = document.getElementById(`cat-btn-${c}`);
+        if (btn) {
+          if (c === cat) {
+            btn.className = "badge-pill px-3 py-1 rounded-lg text-xs font-bold transition-all bg-cyan-500/30";
+          } else {
+            btn.className = "badge-pill px-3 py-1 rounded-lg text-xs font-semibold transition-all opacity-75";
+          }
+        }
+      });
+      currentCardIndex = 0;
+      renderCurrentCard();
+    }
+
+    function getFilteredDeck() {
+      if (activeCategory === 'All') return deck;
+      return deck.filter(card => card.category === activeCategory);
+    }
+
+    // Toggle Hiragana Hint
+    function toggleFrontHiragana() {
+      showFrontHiragana = !showFrontHiragana;
+      const hintEl = document.getElementById('card-front-hiragana');
+      const toggleText = document.getElementById('hiragana-toggle-text');
+      if (showFrontHiragana) {
+        hintEl.classList.remove('invisible');
+        toggleText.textContent = 'Hide Hiragana Hint';
+      } else {
+        hintEl.classList.add('invisible');
+        toggleText.textContent = 'Show Hiragana Hint';
+      }
+    }
+
+    // Theme Switcher
+    function setTheme(themeName) {
+      document.body.classList.remove('theme-neon', 'theme-matcha', 'theme-arcade');
+      document.body.classList.add(`theme-${themeName}`);
+
+      ['neon', 'matcha', 'arcade'].forEach(t => {
+        const btn = document.getElementById(`theme-btn-${t}`);
+        if (t === themeName) {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 accent-btn shadow";
+        } else {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 opacity-75 hover:opacity-100";
+        }
+      });
+    }
+
+    // Mode Switching
+    function switchMode(mode) {
+      ['flashcards', 'quiz', 'browse', 'add'].forEach(m => {
+        const section = document.getElementById(`section-${m}`);
+        const tab = document.getElementById(`tab-${m}`);
+        if (m === mode) {
+          section.classList.remove('hidden');
+          section.classList.add('flex');
+          tab.classList.remove('secondary-btn');
+          tab.classList.add('accent-btn');
+        } else {
+          section.classList.add('hidden');
+          section.classList.remove('flex');
+          tab.classList.remove('accent-btn');
+          tab.classList.add('secondary-btn');
+        }
+      });
+
+      if (mode === 'quiz') generateQuizQuestion();
+      if (mode === 'browse') renderBrowseList(deck);
+    }
+
+    // Flashcard Render
+    function renderCurrentCard() {
+      const currentFiltered = getFilteredDeck();
+      if (currentFiltered.length === 0) return;
+      if (currentCardIndex >= currentFiltered.length) currentCardIndex = 0;
+
+      const card = currentFiltered[currentCardIndex];
+      const reading = card.hiragana || '';
+
+      const inner = document.getElementById('flashcard-inner');
+      isFlipped = false;
+      inner.classList.remove('rotate-y-180');
+
+      setTimeout(() => {
+        document.getElementById('card-progress-label').textContent = `${currentCardIndex + 1} / ${currentFiltered.length} (${activeCategory})`;
+        document.getElementById('card-category').textContent = card.category || 'Core Word';
+        document.getElementById('card-emoji').textContent = card.emoji || '📖';
+        document.getElementById('card-front-hiragana').textContent = reading;
+        
+        const hintEl = document.getElementById('card-front-hiragana');
+        const toggleText = document.getElementById('hiragana-toggle-text');
+        if (!showFrontHiragana) {
+          hintEl.classList.add('invisible');
+          toggleText.textContent = 'Show Hiragana Hint';
+        } else {
+          hintEl.classList.remove('invisible');
+          toggleText.textContent = 'Hide Hiragana Hint';
+        }
+
+        document.getElementById('card-jp').textContent = card.jp;
+        document.getElementById('card-hiragana').textContent = reading;
+        document.getElementById('card-en').textContent = card.en;
+        document.getElementById('card-example-jp').textContent = card.exampleJp;
+        document.getElementById('card-example-hiragana').textContent = card.exampleHiragana || reading;
+        document.getElementById('card-example-en').textContent = `"${card.exampleEn}"`;
+      }, 120);
+    }
+
+    function flipCard() {
+      const inner = document.getElementById('flashcard-inner');
+      isFlipped = !isFlipped;
+      if (isFlipped) inner.classList.add('rotate-y-180');
+      else inner.classList.remove('rotate-y-180');
+    }
+
+    function nextCard() {
+      const currentFiltered = getFilteredDeck();
+      currentCardIndex = (currentCardIndex + 1) % currentFiltered.length;
+      renderCurrentCard();
+    }
+
+    function prevCard() {
+      const currentFiltered = getFilteredDeck();
+      currentCardIndex = (currentCardIndex - 1 + currentFiltered.length) % currentFiltered.length;
+      renderCurrentCard();
+    }
+
+    function shuffleDeck() {
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      currentCardIndex = 0;
+      renderCurrentCard();
+      renderBrowseList(deck);
+    }
+
+    // Pronunciation Audio
+    function speakJapanese(event) {
+      event.stopPropagation();
+      if (!('speechSynthesis' in window)) return;
+      const currentFiltered = getFilteredDeck();
+      const card = currentFiltered[currentCardIndex];
+      const utterance = new SpeechSynthesisUtterance(card.jp);
+      utterance.lang = 'ja-JP';
+      utterance.rate = 0.9;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      const flashcardsVisible = !document.getElementById('section-flashcards').classList.contains('hidden');
+      if (!flashcardsVisible) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        flipCard();
+      } else if (e.code === 'KeyH') {
+        e.preventDefault();
+        toggleFrontHiragana();
+      } else if (e.code === 'ArrowRight') {
+        nextCard();
+      } else if (e.code === 'ArrowLeft') {
+        prevCard();
+      }
+    });
+
+    // Browse List & Search
+    function renderBrowseList(items) {
+      const container = document.getElementById('browse-list-container');
+      container.innerHTML = '';
+      items.slice(0, 150).forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = "flex items-center justify-between p-3 rounded-xl bg-black/20 border border-current/10 text-sm";
+        div.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="text-xl">${item.emoji || '📖'}</span>
+            <div>
+              <div class="font-bold flex items-center gap-2">
+                <span>${item.jp}</span>
+                <span class="text-xs opacity-70 font-normal">(${item.hiragana})</span>
+              </div>
+              <p class="text-xs opacity-75">${item.en}</p>
+            </div>
+          </div>
+          <span class="badge-pill text-[10px] px-2.5 py-0.5 rounded-full">${item.category || 'Core'}</span>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function handleSearch() {
+      const query = document.getElementById('search-input').value.toLowerCase().trim();
+      if (!query) {
+        renderBrowseList(deck);
+        return;
+      }
+      const filtered = deck.filter(d => 
+        d.jp.toLowerCase().includes(query) || 
+        d.hiragana.toLowerCase().includes(query) || 
+        d.en.toLowerCase().includes(query)
+      );
+      renderBrowseList(filtered);
+    }
+
+    // Add Custom Card
+    function handleAddCard(event) {
+      event.preventDefault();
+      const jp = document.getElementById('input-jp').value.trim();
+      const hiragana = document.getElementById('input-hiragana').value.trim();
+      const en = document.getElementById('input-en').value.trim();
+      const emoji = document.getElementById('input-emoji').value.trim() || '📖';
+      const exampleInput = document.getElementById('input-example').value.trim();
+      const exampleHiraganaInput = document.getElementById('input-example-hiragana').value.trim();
+
+      if (!jp || !hiragana || !en) return;
+
+      const newCard = {
+        jp,
+        hiragana,
+        en,
+        emoji,
+        category: "Custom",
+        exampleJp: exampleInput || `${jp}を使った例文です。`,
+        exampleHiragana: exampleHiraganaInput || `${hiragana}をつかったれいぶんはこれです。`,
+        exampleEn: exampleInput ? "Custom example sentence" : `Practice sentence with "${en}".`
+      };
+
+      deck.unshift(newCard);
+      saveCustomWord(newCard);
+      currentCardIndex = 0;
+      updateStatsUI();
+      renderCurrentCard();
+
+      document.getElementById('add-card-form').reset();
+      const toast = document.getElementById('form-toast');
+      document.getElementById('form-toast-text').textContent = `✨ Added "${jp} (${hiragana} - ${en})" to your deck!`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 4000);
+    }
+
+    function resetDefaultDeck() {
+      try { localStorage.removeItem(STORAGE_KEY_CUSTOM); } catch (e) {}
+      loadDeck();
+      const toast = document.getElementById('form-toast');
+      document.getElementById('form-toast-text').textContent = `🔄 Deck restored to ${CORE_2000_DATABASE.length} authentic Core Japanese words.`;
+      toast.classList.remove('hidden');
+    }
+
+    // Toggle Quiz Direction (EN -> JP or JP -> EN)
+    function toggleQuizDirection() {
+      quizDirection = quizDirection === 'EN_TO_JP' ? 'JP_TO_EN' : 'EN_TO_JP';
+      const label = document.getElementById('quiz-dir-label');
+      const instruction = document.getElementById('quiz-instruction');
+      if (quizDirection === 'EN_TO_JP') {
+        label.textContent = 'Mode: EN → JP';
+        instruction.textContent = 'Choose the matching Japanese word';
+      } else {
+        label.textContent = 'Mode: JP → EN';
+        instruction.textContent = 'What does this Japanese word mean?';
+      }
+      generateQuizQuestion();
+    }
+
+    function speakQuizWord(event) {
+      if (event) event.stopPropagation();
+      if (!('speechSynthesis' in window) || !currentQuizCorrectCard) return;
+      const utterance = new SpeechSynthesisUtterance(currentQuizCorrectCard.jp);
+      utterance.lang = 'ja-JP';
+      utterance.rate = 0.9;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Mini-Quiz Logic & Confetti
+    function generateQuizQuestion() {
+      quizAnswered = false;
+      document.getElementById('quiz-feedback').classList.add('hidden');
+
+      const correctIndex = Math.floor(Math.random() * deck.length);
+      currentQuizCorrectCard = deck[correctIndex];
+
+      document.getElementById('quiz-emoji').textContent = currentQuizCorrectCard.emoji || '📖';
+
+      if (quizDirection === 'EN_TO_JP') {
+        // Prompt in English, Answer buttons in Japanese (Kanji + Hiragana)
+        document.getElementById('quiz-jp').textContent = currentQuizCorrectCard.en;
+        document.getElementById('quiz-hiragana').textContent = `Category: ${currentQuizCorrectCard.category}`;
+      } else {
+        // Prompt in Japanese, Answer buttons in English
+        document.getElementById('quiz-jp').textContent = currentQuizCorrectCard.jp;
+        document.getElementById('quiz-hiragana').textContent = currentQuizCorrectCard.hiragana;
+      }
+
+      const distractors = deck
+        .filter((card) => card.jp !== currentQuizCorrectCard.jp)
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 3);
+
+      const options = [currentQuizCorrectCard, ...distractors].sort(() => 0.5 - Math.random());
+
+      const optionsContainer = document.getElementById('quiz-options');
+      optionsContainer.innerHTML = '';
+
+      options.forEach((opt) => {
+        const btn = document.createElement('button');
+        btn.className = "secondary-btn p-4 rounded-2xl font-bold text-left flex items-center justify-between transition-all hover:scale-[1.02]";
+        
+        if (quizDirection === 'EN_TO_JP') {
+          btn.innerHTML = `
+            <div>
+              <div class="text-lg font-extrabold">${opt.jp}</div>
+              <div class="text-xs opacity-80 font-medium">${opt.hiragana}</div>
+            </div>
+            <i class="ph-bold ph-circle opacity-40 text-lg"></i>
+          `;
+        } else {
+          btn.innerHTML = `
+            <span class="text-sm sm:text-base">${opt.en}</span>
+            <i class="ph-bold ph-circle opacity-40 text-lg"></i>
+          `;
+        }
+
+        btn.onclick = () => checkQuizAnswer(opt, btn);
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    function checkQuizAnswer(selectedCard, clickedButton) {
+      if (quizAnswered) return;
+      quizAnswered = true;
+
+      const isCorrect = selectedCard.jp === currentQuizCorrectCard.jp;
+      const feedbackBox = document.getElementById('quiz-feedback');
+      const feedbackText = document.getElementById('quiz-feedback-text');
+
+      if (isCorrect) {
+        currentStreak++;
+        totalQuizScore++;
+        if (currentStreak > bestStreak) {
+          bestStreak = currentStreak;
+          try { localStorage.setItem(STORAGE_KEY_STREAK, bestStreak); } catch (e) {}
+        }
+        clickedButton.className = "p-4 rounded-2xl font-bold text-left flex items-center justify-between bg-emerald-500 text-white border-2 border-emerald-300 shadow-lg";
+        clickedButton.querySelector('i').className = "ph-fill ph-check-circle text-xl";
+        
+        feedbackBox.className = "rounded-2xl p-4 text-sm font-bold flex items-center justify-between bg-emerald-500/20 border border-emerald-400 text-emerald-300";
+        feedbackText.innerHTML = `🎉 Correct! <strong>${currentQuizCorrectCard.jp} (${currentQuizCorrectCard.hiragana})</strong> means "${currentQuizCorrectCard.en}".`;
+        launchConfetti();
+      } else {
+        currentStreak = 0;
+        clickedButton.className = "p-4 rounded-2xl font-bold text-left flex items-center justify-between bg-rose-500 text-white border-2 border-rose-300";
+        clickedButton.querySelector('i').className = "ph-fill ph-x-circle text-xl";
+
+        feedbackBox.className = "rounded-2xl p-4 text-sm font-bold flex items-center justify-between bg-rose-500/20 border border-rose-400 text-rose-300";
+        feedbackText.innerHTML = `💡 Not quite! <strong>${currentQuizCorrectCard.jp} (${currentQuizCorrectCard.hiragana})</strong> means "${currentQuizCorrectCard.en}".`;
+      }
+
+      updateStatsUI();
+      feedbackBox.classList.remove('hidden');
+    }
+
+    // Confetti Animation
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const ctx = confettiCanvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function launchConfetti() {
+      resizeCanvas();
+      const colors = ['#ec4899', '#06b6d4', '#facc15', '#4ade80', '#a855f7'];
+      for (let i = 0; i < 65; i++) {
+        particles.push({
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2,
+          vx: (Math.random() - 0.5) * 14,
+          vy: (Math.random() - 0.8) * 14,
+          size: Math.random() * 8 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          alpha: 1,
+          rotation: Math.random() * 360
+        });
+      }
+    }
+
+    function animateConfetti() {
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.35;
+        p.alpha -= 0.015;
+        p.rotation += 5;
+
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+      }
+      requestAnimationFrame(animateConfetti);
+    }
+
+    window.onload = function () {
+      resizeCanvas();
+      loadDeck();
+      animateConfetti();
+    };
+
+    // Support Modal Handlers
+    function openSupportModal() {
+      const modal = document.getElementById('support-modal');
+      const box = document.getElementById('support-modal-box');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.classList.add('opacity-100');
+        box.classList.remove('scale-95');
+        box.classList.add('scale-100');
+      }, 10);
+    }
+
+    function closeSupportModal() {
+      const modal = document.getElementById('support-modal');
+      const box = document.getElementById('support-modal-box');
+      modal.classList.remove('opacity-100');
+      modal.classList.add('opacity-0');
+      box.classList.remove('scale-100');
+      box.classList.add('scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 200);
+    }
+
+    // Close modal on outside backdrop click
+    document.getElementById('support-modal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeSupportModal();
+      }
+    });
+  </script>
+
+  <!-- Ko-fi Official Overlay Widget -->
+  <script src='https://storage.ko-fi.com/cdn/scripts/overlay-widget.js'></script>
+  <script>
+    try {
+      if (window.kofiWidgetOverlay) {
+        kofiWidgetOverlay.draw('Kotovibe', {
+          'type': 'floating-chat',
+          'floating-chat.donatebutton.text': 'Support on Ko-fi',
+          'floating-chat.donatebutton.background-color': '#13C3FF',
+          'floating-chat.donatebutton.text-color': '#fff'
+        });
+      }
+    } catch(e) {}
+  </script>
+</body>
+</html>
